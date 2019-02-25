@@ -1,0 +1,1 @@
+ &middot; <a href="{$filterUrl}">{$lang->adrem_show_entity_inspections}</a>

@@ -1,0 +1,1 @@
+<tr><td class="trow1 smalltext"><a href="modcp.php?action=content_inspections" class="modcp_nav_item modcp_nav_modlogs">{$lang->adrem_inspection_logs}</a></td></tr>
