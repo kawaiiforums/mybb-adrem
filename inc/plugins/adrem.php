@@ -228,7 +228,7 @@ function adrem_activate()
                 'title'       => 'Monitored User Groups',
                 'description' => 'Select which user groups\' content should be assessed.',
                 'optionscode' => 'groupselect',
-                'value'       => '2',
+                'value'       => '-1',
             ],
             'monitored_forums' => [
                 'title'       => 'Monitored Forums',
@@ -262,6 +262,17 @@ function adrem_activate()
         '{$post[\'posturl\']}',
         '{$post[\'posturl\']}{$post[\'inspection_status\']}'
     );
+
+    // datacache
+    $value = \adrem\getSettingValue('ruleset');
+
+    $validationResults = \adrem\Ruleset::getValidationResults($value);
+
+    if ($validationResults['errors'] === []) {
+        \adrem\updateCache([
+            'ruleset' => \adrem\Ruleset::getParsedRuleset($value),
+        ]);
+    }
 }
 
 function adrem_deactivate()
