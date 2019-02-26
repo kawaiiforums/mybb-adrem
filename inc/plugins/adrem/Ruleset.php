@@ -114,9 +114,9 @@ class Ruleset
     {
         $attributeValues = [];
 
-        foreach ($assessmentAttributeValues as $assessment => $attributeValues) {
-            foreach ($attributeValues as $attributeName => $value) {
-                $attributeValues[$assessment . ':' . $attributeName] = $value;
+        foreach ($assessmentAttributeValues as $assessmentName => $assessmentAttributeValueSet) {
+            foreach ($assessmentAttributeValueSet as $attributeName => $value) {
+                $attributeValues[$assessmentName . ':' . $attributeName] = $value;
             }
         }
 
@@ -252,7 +252,28 @@ class Ruleset
 
     protected static function getRuleResult(string $attributeValue, string $referenceValue, string $operator): bool
     {
-        return version_compare($attributeValue, $referenceValue, $operator);
+        switch ($operator) {
+            case '<':
+                $result = $attributeValue < $referenceValue;
+                break;
+            case '<=':
+                $result = $attributeValue <= $referenceValue;
+                break;
+            case '>':
+                $result = $attributeValue > $referenceValue;
+                break;
+            case '>=':
+                $result = $attributeValue >= $referenceValue;
+                break;
+            case '=':
+                $result = $attributeValue == $referenceValue;
+                break;
+            case '!=':
+                $result = $attributeValue != $referenceValue;
+                break;
+        }
+
+        return $result;
     }
 
     protected function getContentTypeActionsInRuleset(string $contentType): array
@@ -290,7 +311,7 @@ class Ruleset
                 }
             }
 
-            return $actions;
+            return array_unique($actions);
         } catch (\Exception $e) {
             return [];
         }

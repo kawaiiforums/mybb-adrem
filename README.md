@@ -88,6 +88,32 @@ The Ruleset verification validates the syntax and checks availability of used Co
     ]
 }
 ```
+**Example** - Conversation AI's [Perspective API](https://github.com/conversationai/perspectiveapi):
+```json
+{
+    "post": [
+        {
+            "rules": [
+                {"any": [
+                    ["perspective:SEVERE_TOXICITY", ">=", "0.4"],
+                    ["perspective:THREAT", ">=", "0.4"]
+                ]}
+            ],
+            "actions": ["softDelete", "report"]
+        },
+        {
+            "rules": [
+                {"any": [
+                    ["perspective:INCOHERENT", ">=", "0.75"],
+                    ["perspective:SPAM", ">=", "0.75"],
+                    ["perspective:UNSUBSTANTIAL", ">=", "0.75"]
+                ]}
+            ],
+            "actions": ["report"]
+        }
+    ]
+}
+```
 
 ### Data Flow
 1. *Ad Rem* receives the discovered Content Entity (usually through plugin hooks),

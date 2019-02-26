@@ -127,9 +127,11 @@ function modcp_start(): void
                         if (empty($inspectionData['actions'])) {
                             $actions = '-';
                         } else {
-                            $actions = '<code>' . \htmlspecialchars_uni(
-                                str_replace(';', '</code>, <code>', $inspectionData['actions'])
-                            ) . '</code>';
+                            $actions = array_map(
+                                '\htmlspecialchars_uni',
+                                explode(';', $inspectionData['actions'])
+                            );
+                            $actions = '<code>' . implode('</code>, <code>', $actions) . '</code>';
                         }
 
                         eval('$results .= "' . \adrem\tpl('modcp_inspections_inspection') . '";');
@@ -161,12 +163,14 @@ function modcp_start(): void
                     $entityUrl = \adrem\getContentEntityUrl($inspectionData['content_type'], $inspectionData['content_entity_id']);
                     $dateCompleted = \my_date('relative', $inspectionData['date_completed']);
 
-                    if (empty($actions)) {
+                    if (empty($inspectionData['actions'])) {
                         $actions = '-';
                     } else {
-                        $actions = \htmlspecialchars_uni(
-                            str_replace(';', ', ', $inspectionData['actions'])
+                        $actions = array_map(
+                            '\htmlspecialchars_uni',
+                            explode(';', $inspectionData['actions'])
                         );
+                        $actions = '<code>' . implode('</code>, <code>', $actions) . '</code>';
                     }
 
                     if ($inspectionData['content_entity_data']) {
