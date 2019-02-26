@@ -64,7 +64,7 @@ function adrem_install()
     switch ($db->type) {
         case 'pgsql':
             $db->write_query("
-                CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "adrem_inspections` (
+                CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "adrem_inspections (
                     id serial,
                     content_type text NOT NULL,
                     content_entity_id integer NOT NULL,
@@ -77,7 +77,7 @@ function adrem_install()
                 )
             ");
             $db->write_query("
-                CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX . "adrem_assessments` (
+                CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "adrem_assessments (
                     id serial,
                     inspection_id integer NOT NULL
                         REFERENCES " . TABLE_PREFIX . "adrem_assessments(id) ON DELETE CASCADE,
