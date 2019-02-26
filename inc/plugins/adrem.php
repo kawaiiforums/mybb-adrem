@@ -21,7 +21,7 @@ spl_autoload_register(function ($path) {
     $baseDir = MYBB_ROOT . 'inc/plugins/adrem/';
 
     if (strpos($path, $prefix) === 0) {
-        $className = substr($path, strlen($prefix));
+        $className = str_replace('\\', '/', substr($path, strlen($prefix)));
         $file = $baseDir . $className . '.php';
 
         if (file_exists($file)) {
