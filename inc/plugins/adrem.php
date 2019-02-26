@@ -252,12 +252,12 @@ function adrem_activate()
         \adrem\getFilesContentInDirectory(MYBB_ROOT . 'inc/plugins/adrem/templates', '.tpl')
     );
 
-    \itscomplicated\replaceInTemplate(
+    \adrem\replaceInTemplate(
         'postbit',
         '{$post[\'posturl\']}',
         '{$post[\'posturl\']}{$post[\'inspection_status\']}'
     );
-    \itscomplicated\replaceInTemplate(
+    \adrem\replaceInTemplate(
         'postbit_classic',
         '{$post[\'posturl\']}',
         '{$post[\'posturl\']}{$post[\'inspection_status\']}'
@@ -273,6 +273,6 @@ function adrem_deactivate()
     // templates
     $PL->templates_delete('adrem', true);
 
-    \itscomplicated\replaceInTemplate('postbit', '{$post[\'inspection_status\']}', '');
-    \itscomplicated\replaceInTemplate('postbit_classic', '{$post[\'inspection_status\']}', '');
+    \adrem\replaceInTemplate('postbit', '{$post[\'inspection_status\']}', '');
+    \adrem\replaceInTemplate('postbit_classic', '{$post[\'inspection_status\']}', '');
 }
