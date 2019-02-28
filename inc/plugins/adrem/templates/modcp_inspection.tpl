@@ -28,7 +28,7 @@
 					</tr>
 					<tr>
 						<td class="trow1" width="20%">
-							<strong>{$lang->adrem_inspection_date_completed}</strong>
+							<strong>{$lang->adrem_date_completed}</strong>
 						</td>
 						<td class="trow1" width="80%">
 							{$dateCompleted}

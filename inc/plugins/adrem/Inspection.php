@@ -21,10 +21,11 @@ class Inspection
      */
     protected $db;
 
-    public function __construct(Ruleset $ruleset, ContentEntity $contentEntity)
+    public function __construct(?int $id = null)
     {
-        $this->setRuleset($ruleset);
-        $this->setContentEntity($contentEntity);
+        if ($id !== null) {
+            $this->id = $id;
+        }
     }
 
     public function getId(): ?int
@@ -84,7 +85,9 @@ class Inspection
             $callable = '\adrem\Assessment\\' . ucfirst($assessmentName);
 
             /** @var \adrem\Assessment $assessment */
-            $assessment = new $callable($this->contentEntity);
+            $assessment = new $callable();
+
+            $assessment->setContentEntity($this->contentEntity);
 
             $availableAttributes = $assessment->setRequestedAttributes($attributeNames);
 
@@ -114,7 +117,6 @@ class Inspection
             'content_entity_id' => (int)$this->contentEntity->getId(),
             'content_entity_data' => $db->escape_string(json_encode($this->contentEntity->getData())),
             'completed' => (int)$this->completed,
-            'date_requested' => \TIME_NOW,
         ];
 
         if ($this->dateCompleted) {
@@ -128,6 +130,8 @@ class Inspection
         if ($this->id) {
             $db->update_query('adrem_inspections', $data, 'id = ' . (int)$this->id);
         } else {
+            $data['date_requested'] = \TIME_NOW;
+
             $this->id = $db->insert_query('adrem_inspections', $data);
         }
 

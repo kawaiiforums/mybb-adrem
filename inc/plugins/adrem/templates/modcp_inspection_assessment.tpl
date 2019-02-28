@@ -5,7 +5,7 @@
 </tr>
 <tr>
     <td class="trow1" width="20%">
-        <strong>{$lang->adrem_inspection_date_completed}</strong>
+        <strong>{$lang->adrem_date_completed}</strong>
     </td>
     <td class="trow1" width="80%">
         {$dateCompleted}
@@ -13,7 +13,7 @@
 </tr>
 <tr>
     <td class="trow1" width="20%">
-        <strong>{$lang->adrem_inspection_duration}</strong>
+        <strong>{$lang->adrem_duration}</strong>
     </td>
     <td class="trow1" width="80%">
         {$duration}
@@ -21,7 +21,7 @@
     {$attributeValueRows}
     <tr>
         <td class="trow1" width="20%">
-            <strong>{$lang->adrem_inspection_assesment_result_data}</strong>
+            <strong>{$lang->adrem_assesment_result_data}</strong>
         </td>
         <td class="trow1" width="80%">
             <pre><code>{$resultData}</code></pre>

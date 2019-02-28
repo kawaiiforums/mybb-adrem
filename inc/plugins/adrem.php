@@ -87,6 +87,7 @@ function adrem_install()
                     duration decimal(10,4) NOT NULL,
                     result_data text,
                     attribute_values text NOT NULL,
+                    suggested_attribute_values text,
                     PRIMARY KEY (id)
                 )
             ");
@@ -117,6 +118,7 @@ function adrem_install()
                     duration decimal(10,4) NOT NULL,
                     result_data text,
                     attribute_values text NOT NULL,
+                    suggested_attribute_values text,
                     PRIMARY KEY (id)
                 )
             ");
@@ -146,6 +148,7 @@ function adrem_install()
                     `duration` decimal(10,4) NOT NULL,
                     `result_data` text,
                     `attribute_values` text NOT NULL,
+                    `suggested_attribute_values` text,
                     PRIMARY KEY (`id`),
                     FOREIGN KEY (`inspection_id`)
                         REFERENCES " . TABLE_PREFIX . "adrem_inspections (`id`)
@@ -236,11 +239,23 @@ function adrem_activate()
                 'optionscode' => 'forumselect',
                 'value'       => '-1',
             ],
+            'action_user' => [
+                'title'       => 'Action User',
+                'description' => 'Choose a user ID that will be assigned to moderator actions.',
+                'optionscode' => 'numeric',
+                'value'       => '0',
+            ],
             'perspective_api_key' => [
                 'title'       => 'Perspective Assessment: API Key',
                 'description' => 'An API key for the <i>Perspective</i> assessment.',
                 'optionscode' => 'text',
                 'value'       => '',
+            ],
+            'perspective_do_not_store' => [
+                'title'       => 'Perspective Assessment: Do Not Store',
+                'description' => 'Choose whether to request submitted data is not stored remotely.',
+                'optionscode' => 'yesno',
+                'value'       => '1',
             ],
         ]
     );

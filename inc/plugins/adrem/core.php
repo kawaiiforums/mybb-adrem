@@ -2,7 +2,7 @@
 
 namespace adrem;
 
-// rulesets
+// Rulesets
 function getRuleset(): Ruleset
 {
     static $ruleset;
@@ -16,13 +16,13 @@ function getRuleset(): Ruleset
     return $ruleset;
 }
 
-// content types
+// Content Types
 function contentTypeExists(string $name): bool
 {
     return class_exists('\adrem\ContentEntity\\' . ucfirst($name));
 }
 
-function getContentEntity(string $contentType, int $contentEntityId): ?ContentEntity
+function getContentEntity(string $contentType, ?int $contentEntityId = null): ?ContentEntity
 {
     if (\adrem\contentTypeExists($contentType)) {
         $class = '\adrem\ContentEntity\\' . ucfirst($contentType);
@@ -52,8 +52,7 @@ function getContentEntityUrl(string $contentType, int $contentEntityId): ?string
 
 function getContentTypeEntityActions(string $contentType): array
 {
-    /* @var ContentEntity $class */
-    $class = '\adrem\ContentEntity\\' . ucfirst($contentType);
+    $class = \adrem\getContentEntity($contentType);
 
     return $class::getSupportedActions();
 }
@@ -63,23 +62,7 @@ function contentTypeActionExists(string $contentType, string $action): bool
     return in_array($action, \adrem\getContentTypeEntityActions($contentType));
 }
 
-// assessments
-function assessmentExists(string $name): bool
-{
-    return class_exists('\adrem\Assessment\\' . ucfirst($name));
-}
-
-function assessmentProvidesAttribute(string $assessmentName, string $attributeName): bool
-{
-    /* @var Assessment $class */
-    $class = '\adrem\Assessment\\' . ucfirst($assessmentName);
-
-    $providedAttributes = $class::getProvidedAttributes();
-
-    return in_array($attributeName, $providedAttributes);
-}
-
-// inspections
+// Inspections
 function discoverContentEntity(ContentEntity $contentEntity): void
 {
     \adrem\inspectContentEntity($contentEntity);
@@ -89,13 +72,53 @@ function inspectContentEntity(ContentEntity $contentEntity): void
 {
     global $db;
 
-    $inspection = new Inspection(\adrem\getRuleset(), $contentEntity);
+    $inspection = new Inspection();
+
+    $inspection->setRuleset(\adrem\getRuleset());
+    $inspection->setContentEntity($contentEntity);
+
     $inspection->persist($db, true);
     $inspection->run();
 
     $contentEntity->triggerActions(
         $inspection->getContentTypeActions()
     );
+}
+
+// Assessments
+function assessmentExists(string $name): bool
+{
+    return class_exists('\adrem\Assessment\\' . ucfirst($name));
+}
+
+function assessmentProvidesAttribute(string $assessmentName, string $attributeName): bool
+{
+    $class = \adrem\getAssessment($assessmentName);
+
+    $providedAttributes = $class::getProvidedAttributes();
+
+    return in_array($attributeName, $providedAttributes);
+}
+
+function assessmentSupportsAttributeValueSuggestions(string $assessmentName, string $version): bool
+{
+    $class = \adrem\getAssessment($assessmentName);
+
+    return $class::supportsAttributeValueSuggestions($version);
+}
+
+function getAssessment(string $name, ?int $id = null): ?Assessment
+{
+    if (\adrem\assessmentExists($name)) {
+        $class = '\adrem\Assessment\\' . ucfirst($name);
+
+        /* @var Assessment $assessment */
+        $assessment = new $class($id);
+
+        return $assessment;
+    } else {
+        return null;
+    }
 }
 
 // miscellaneous

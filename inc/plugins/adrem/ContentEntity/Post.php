@@ -79,7 +79,7 @@ class Post extends ContentEntity
             'id' => $this->getData(true)['pid'],
             'id2' => $this->getData(true)['tid'],
             'id3' => $this->getData(true)['fid'],
-            'uid' => 0,
+            'uid' => \adrem\getSettingValue('action_user'),
             'reasonid' => 1,
             'reason' => 'Ad Rem',
         ];

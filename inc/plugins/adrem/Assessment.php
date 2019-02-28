@@ -4,6 +4,7 @@ namespace adrem;
 
 class Assessment
 {
+    protected $id;
     /**
      * @var ContentEntity
      */
@@ -11,6 +12,7 @@ class Assessment
     protected $inspectionId;
     protected $requestedAttributes = [];
     protected $attributeValues = [];
+    protected $suggestedAttributeValues = [];
     protected $duration;
     protected $resultData;
 
@@ -37,9 +39,11 @@ class Assessment
         return $providedAttributes;
     }
 
-    public function __construct(ContentEntity $contentEntity)
+    public function __construct(?int $id = null)
     {
-        $this->setContentEntity($contentEntity);
+        if ($id !== null) {
+            $this->id = $id;
+        }
     }
 
     public function setContentEntity(ContentEntity $contentEntity): void
@@ -61,6 +65,27 @@ class Assessment
 
             return true;
         }
+    }
+
+    public function setSuggestedAttributeValues(array $attributeValues): bool
+    {
+        if (array_diff(array_keys($attributeValues), static::getProvidedAttributes())) {
+            return false;
+        } else {
+            $this->suggestedAttributeValues = $attributeValues;
+
+            return true;
+        }
+    }
+
+    public function submitSuggestedAttributeValues(): bool
+    {
+        return false;
+    }
+
+    public static function supportsAttributeValueSuggestions(string $version): bool
+    {
+        return false;
     }
 
     public function getResultData(): ?array
@@ -101,19 +126,35 @@ class Assessment
 
     public function persist(\DB_Base $db): int
     {
-        $data = [
-            'inspection_id' => (int)$this->inspectionId,
-            'name' => $db->escape_string(self::getName()),
-            'version' => $db->escape_string(self::VERSION),
-            'date_completed' => time(),
-            'duration' => (float)$this->duration,
-            'attribute_values' => $db->escape_string(json_encode($this->getAttributeValues())),
-        ];
+        $data = [];
+
+        if ($this->duration !== null) {
+            $data['duration'] = (float)$this->duration;
+        }
+
+        if ($this->attributeValues) {
+            $data['attribute_values'] = $db->escape_string(json_encode($this->attributeValues));
+        }
 
         if ($this->getResultData()) {
             $data['result_data'] = $db->escape_string(json_encode($this->getResultData()));
         }
 
-        return $db->insert_query('adrem_assessments', $data);
+        if ($this->suggestedAttributeValues) {
+            $data['suggested_attribute_values'] = $db->escape_string(json_encode($this->suggestedAttributeValues));
+        }
+
+        if ($this->id) {
+            $db->update_query('adrem_assessments', $data, 'id = ' . (int)$this->id);
+        } else {
+            $data['inspection_id'] = (int)$this->inspectionId;
+            $data['name'] = $db->escape_string(static::getName());
+            $data['version'] = $db->escape_string(static::VERSION);
+            $data['date_completed'] = \TIME_NOW;
+
+            $this->id = $db->insert_query('adrem_assessments', $data);
+        }
+
+        return $this->id;
     }
 }

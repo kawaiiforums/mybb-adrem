@@ -53,7 +53,7 @@ class Ruleset
                         } else {
                             $results = array_merge_recursive(
                                 $results,
-                                self::getRuleArrayValidationResults($conditional['rules'], $contentType, true)
+                                static::getRuleArrayValidationResults($conditional['rules'], $contentType, true)
                             );
                         }
 
@@ -182,7 +182,7 @@ class Ruleset
                         } else {
                             $results = array_merge_recursive(
                                 $results,
-                                self::getRuleArrayValidationResults(current($item), $contentType)
+                                static::getRuleArrayValidationResults(current($item), $contentType)
                             );
                         }
                     } else {
@@ -210,7 +210,7 @@ class Ruleset
             if (is_array(current($item))) {
                 $localRoleGroupOperator = array_keys($item)[0];
 
-                $itemResult = self::getRuleArrayResultByRuleAttributeValues(current($item), $ruleAttributeValues, $localRoleGroupOperator);
+                $itemResult = static::getRuleArrayResultByRuleAttributeValues(current($item), $ruleAttributeValues, $localRoleGroupOperator);
             } else {
                 [$attribute, $operator, $referenceValue] = $item;
 
@@ -218,7 +218,7 @@ class Ruleset
                     throw new \Exception('Attempting to use non-provided `' . $attribute . '` attribute');
                 }
 
-                $itemResult = self::getRuleResult($ruleAttributeValues[$attribute], $referenceValue, $operator);
+                $itemResult = static::getRuleResult($ruleAttributeValues[$attribute], $referenceValue, $operator);
             }
 
             $itemResults['operands']++;
@@ -228,7 +228,7 @@ class Ruleset
         if ($ruleGroupOperator === null) {
             return $itemResults['passed'] == 1;
         } else {
-            $result = self::getRuleGroupResult($itemResults, $ruleGroupOperator);
+            $result = static::getRuleGroupResult($itemResults, $ruleGroupOperator);
         }
 
         return $result;

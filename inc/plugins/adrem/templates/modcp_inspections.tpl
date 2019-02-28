@@ -18,7 +18,7 @@
 							<span class="smalltext"><strong>{$lang->adrem_content_entity}</strong></span>
 						</td>
 						<td class="tcat" width="25%" align="center">
-							<span class="smalltext"><strong>{$listManager->link('date_completed', $lang->adrem_inspection_date_completed)}</strong></span>
+							<span class="smalltext"><strong>{$listManager->link('date_completed', $lang->adrem_date_completed)}</strong></span>
 						</td>
 						<td class="tcat" width="25%" align="center">
 							<span class="smalltext"><strong>{$lang->adrem_inspection_actions}</strong></span>

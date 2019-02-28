@@ -2,7 +2,7 @@
 
 namespace adrem;
 
-// inspections
+// Inspections
 function getInspectionEntry(int $id): ?array
 {
     global $db;
@@ -97,7 +97,20 @@ function getCompletedInspectionEntriesCount(?string $contentType = null, ?int $e
     );
 }
 
-// assessments
+// Assessments
+function getAssessmentEntry(int $id): ?array
+{
+    global $db;
+
+    $query = $db->simple_select('adrem_assessments', '*', 'id = ' . (int)$id);
+
+    if ($db->num_rows($query) == 1) {
+        return $db->fetch_array($query);
+    } else {
+        return null;
+    }
+}
+
 function getInspectionAssessmentEntries(int $inspectionId)
 {
     global $db;

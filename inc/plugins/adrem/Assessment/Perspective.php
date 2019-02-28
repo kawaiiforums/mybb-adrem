@@ -30,25 +30,76 @@ class Perspective extends Assessment
         ];
     }
 
+    public function submitSuggestedAttributeValues(): bool
+    {
+        if ($this->suggestedAttributeValues) {
+            $attributeScores = [];
+
+            foreach ($this->suggestedAttributeValues as $attributeName => $attributeValue) {
+                $attributeScores[$attributeName] = [
+                    'summaryScore' => [
+                        'value' => $attributeValue,
+                    ],
+                ];
+            }
+
+            $requestData = [
+                'comment' => [
+                    'text' => $this->contentEntity->getData()['content'],
+                ],
+                'languages' => [
+                    'en',
+                ],
+                'attributeScores' => $attributeScores,
+            ];
+
+            $responseData = \adrem\getJsonApiResponse(static::getApiEndpointUrl('comments:suggestscore'), $requestData);
+
+            return $responseData !== false;
+        } else {
+            return false;
+        }
+    }
+
+    public static function supportsAttributeValueSuggestions(string $version): bool
+    {
+        return $version == static::VERSION;
+    }
+
+    protected static function getApiEndpointUrl(string $action): string
+    {
+        return 'https://commentanalyzer.googleapis.com/' . static::VERSION . '/' . $action . '?key=' . static::getApiKey();
+    }
+
+    protected static function getApiKey(): ?string
+    {
+        return \adrem\getSettingValue('perspective_api_key');
+    }
+
+    protected static function requestedDoNotStore(): bool
+    {
+        return (bool)\adrem\getSettingValue('perspective_do_not_store');
+    }
+
     protected function loadAttributeValues(): bool
     {
-        $url = 'https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=' . $this->getApiKey();
-
-        $data = \adrem\getJsonApiResponse($url, [
+        $requestData = [
             'comment' => [
                 'text' => $this->contentEntity->getData()['content'],
             ],
             'languages' => [
-                'en'
+                'en',
             ],
             'requestedAttributes' => array_fill_keys($this->requestedAttributes, new \stdClass()),
-            'doNotStore' => true,
-        ]);
+            'doNotStore' => static::requestedDoNotStore(),
+        ];
 
-        if ($data !== false) {
-            if (isset($data['attributeScores']) && is_array($data['attributeScores'])) {
+        $responseData = \adrem\getJsonApiResponse(static::getApiEndpointUrl('comments:analyze'), $requestData);
+
+        if ($responseData !== false) {
+            if (isset($responseData['attributeScores']) && is_array($responseData['attributeScores'])) {
                 foreach ($this->requestedAttributes as $attributeName) {
-                    $value = &$data['attributeScores'][$attributeName]['summaryScore']['value'];
+                    $value = &$responseData['attributeScores'][$attributeName]['summaryScore']['value'];
 
                     if (isset($value)) {
                         $this->attributeValues[$attributeName] = $value;
@@ -56,16 +107,11 @@ class Perspective extends Assessment
                 }
             }
 
-            $this->setResultData($data);
+            $this->setResultData($responseData);
 
             return true;
         } else {
             return false;
         }
-    }
-
-    protected function getApiKey(): ?string
-    {
-        return \adrem\getSettingValue('perspective_api_key');
     }
 }
