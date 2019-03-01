@@ -121,6 +121,51 @@ function getAssessment(string $name, ?int $id = null): ?Assessment
     }
 }
 
+// modules
+function getModuleNames(bool $useCache = true): array
+{
+    if ($useCache) {
+        $moduleNames = \adrem\getCacheValue('modules') ?? [];
+    } else {
+        $moduleNames = [];
+
+        $directory = new \DirectoryIterator(MYBB_ROOT . 'inc/plugins/adrem/modules');
+
+        foreach ($directory as $file) {
+            if (!$file->isDot() && $file->isDir()) {
+                $moduleNames[] = $file->getFilename();
+            }
+        }
+    }
+
+    return $moduleNames;
+}
+
+function loadModules(array $moduleNames): void
+{
+    foreach ($moduleNames as $moduleName) {
+        require_once MYBB_ROOT . 'inc/plugins/adrem/modules/' . $moduleName . '/module.php';
+    }
+}
+
+function registerSettings(array $settings): void
+{
+    global $adremRegisteredSettings;
+
+    if ($adremRegisteredSettings === null) {
+        $adremRegisteredSettings = [];
+    }
+
+    $adremRegisteredSettings = array_merge($adremRegisteredSettings, $settings);
+}
+
+function getRegisteredSettings(): array
+{
+    global $adremRegisteredSettings;
+
+    return $adremRegisteredSettings ?? [];
+}
+
 // miscellaneous
 function forumIsMonitored(int $forumId): bool
 {

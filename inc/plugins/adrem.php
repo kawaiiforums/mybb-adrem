@@ -30,6 +30,8 @@ spl_autoload_register(function ($path) {
     }
 });
 
+\adrem\loadModules(\adrem\getModuleNames());
+
 // init
 define('adrem\DEVELOPMENT_MODE', 1);
 
@@ -162,6 +164,7 @@ function adrem_install()
     // datacache
     $cache->update('adrem', [
         'ruleset' => [],
+        'modules' => [],
     ]);
 }
 
@@ -204,17 +207,17 @@ function adrem_activate()
 
     \adrem\loadPluginLibrary();
 
+    $moduleNames = \adrem\getModuleNames(false);
+
+    \adrem\loadModules($moduleNames);
+
     // settings
-    $PL->settings(
-        'adrem',
-        'Ad Rem',
-        'Settings for the Ad Rem extension.',
-        [
-            'ruleset' => [
-                'title'       => 'Ruleset',
-                'description' => 'Edit the JSON Ruleset to customize rules and actions.',
-                'optionscode' => 'textarea',
-                'value'       => '{
+    $settings = [
+        'ruleset' => [
+            'title'       => 'Ruleset',
+            'description' => 'Edit the JSON Ruleset to customize rules and actions.',
+            'optionscode' => 'textarea',
+            'value'       => '{
     "post": [
         {
             "rules": [
@@ -226,38 +229,28 @@ function adrem_activate()
         }
     ]
 }',
-            ],
-            'monitored_groups' => [
-                'title'       => 'Monitored User Groups',
-                'description' => 'Select which user groups\' content should be assessed.',
-                'optionscode' => 'groupselect',
-                'value'       => '-1',
-            ],
-            'monitored_forums' => [
-                'title'       => 'Monitored Forums',
-                'description' => 'Select which forums\' content should be assessed.',
-                'optionscode' => 'forumselect',
-                'value'       => '-1',
-            ],
-            'action_user' => [
-                'title'       => 'Action User',
-                'description' => 'Choose a user ID that will be assigned to moderator actions.',
-                'optionscode' => 'numeric',
-                'value'       => '0',
-            ],
-            'perspective_api_key' => [
-                'title'       => 'Perspective Assessment: API Key',
-                'description' => 'An API key for the <i>Perspective</i> assessment.',
-                'optionscode' => 'text',
-                'value'       => '',
-            ],
-            'perspective_do_not_store' => [
-                'title'       => 'Perspective Assessment: Do Not Store',
-                'description' => 'Choose whether to request submitted data is not stored remotely.',
-                'optionscode' => 'yesno',
-                'value'       => '1',
-            ],
-        ]
+        ],
+        'monitored_groups' => [
+            'title'       => 'Monitored User Groups',
+            'description' => 'Select which user groups\' content should be assessed.',
+            'optionscode' => 'groupselect',
+            'value'       => '-1',
+        ],
+        'action_user' => [
+            'title'       => 'Action User',
+            'description' => 'Choose a user ID that will be assigned to moderator actions.',
+            'optionscode' => 'numeric',
+            'value'       => '0',
+        ],
+    ];
+
+    $settings = array_merge($settings, \adrem\getRegisteredSettings());
+
+    $PL->settings(
+        'adrem',
+        'Ad Rem',
+        'Settings for the Ad Rem extension.',
+        $settings
     );
 
     // templates
@@ -267,16 +260,20 @@ function adrem_activate()
         \adrem\getFilesContentInDirectory(MYBB_ROOT . 'inc/plugins/adrem/templates', '.tpl')
     );
 
-    \adrem\replaceInTemplate(
-        'postbit',
-        '{$post[\'posturl\']}',
-        '{$post[\'posturl\']}{$post[\'inspection_status\']}'
-    );
-    \adrem\replaceInTemplate(
-        'postbit_classic',
-        '{$post[\'posturl\']}',
-        '{$post[\'posturl\']}{$post[\'inspection_status\']}'
-    );
+    // stylesheets
+    $stylesheets = [
+        'adrem' => [
+            'attached_to' => [],
+        ],
+    ];
+
+    foreach ($stylesheets as $stylesheetName => $stylesheet) {
+        $PL->stylesheet(
+            $stylesheetName,
+            file_get_contents(MYBB_ROOT . 'inc/plugins/adrem/stylesheets/' . $stylesheetName . '.css'),
+            $stylesheet['attached_to']
+        );
+    }
 
     // datacache
     $value = \adrem\getSettingValue('ruleset');
@@ -286,6 +283,7 @@ function adrem_activate()
     if ($validationResults['errors'] === []) {
         \adrem\updateCache([
             'ruleset' => \adrem\Ruleset::getParsedRuleset($value),
+            'modules' => $moduleNames,
         ]);
     }
 }
@@ -296,9 +294,11 @@ function adrem_deactivate()
 
     \adrem\loadPluginLibrary();
 
+    \adrem\loadModules(\adrem\getModuleNames());
+
     // templates
     $PL->templates_delete('adrem', true);
 
-    \adrem\replaceInTemplate('postbit', '{$post[\'inspection_status\']}', '');
-    \adrem\replaceInTemplate('postbit_classic', '{$post[\'inspection_status\']}', '');
+    // stylesheets
+    $PL->stylesheet_delete('adrem', true);
 }

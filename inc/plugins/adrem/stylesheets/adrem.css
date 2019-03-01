@@ -1,0 +1,4 @@
+.inspection-status { margin-right: 3px; }
+a.inspection-status--unprocessed { color: #DDDDDD; }
+a.inspection-status--processed { color: #0088cc; }
+a.inspection-status--triggered { color: #dd5500; }
