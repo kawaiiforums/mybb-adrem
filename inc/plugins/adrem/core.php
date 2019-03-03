@@ -36,6 +36,13 @@ function getContentEntity(string $contentType, ?int $contentEntityId = null): ?C
     }
 }
 
+function contentTypeDiscoverable(string $contentType): bool
+{
+    $entity = \adrem\getContentEntity($contentType);
+
+    return $entity::isDiscoverable();
+}
+
 function contentEntityAccessibleForCurrentUser(string $contentType, int $contentEntityId): bool
 {
     $entity = \adrem\getContentEntity($contentType, $contentEntityId);
@@ -62,6 +69,51 @@ function contentTypeActionExists(string $contentType, string $action): bool
     return in_array($action, \adrem\getContentTypeEntityActions($contentType));
 }
 
+function contentTypeContextPassable(string $sourceContentTypeName, string $targetContentTypeName): bool
+{
+    $sourceContentType = \adrem\getContentEntity($sourceContentTypeName);
+    $targetContentType = \adrem\getContentEntity($targetContentTypeName);
+
+    return (
+        $sourceContentType::providesContext($targetContentTypeName) ||
+        $targetContentType::acceptsContext($sourceContentTypeName)
+    );
+}
+
+function getContentEntityByContext(string $contentTypeName, ContentEntity $contextContentEntity): ?ContentEntity
+{
+    if ($contextContentEntity::providesContext($contentTypeName)) {
+        return $contextContentEntity->getContext($contextContentEntity);
+    } else {
+        $contentEntity = \adrem\getContentEntity($contentTypeName);
+        $contentEntity->assumeContext($contextContentEntity);
+
+        return $contentEntity;
+    }
+}
+
+function getContentTypeActionsByName(array $actions, string $contentEntityName): array
+{
+    $contentTypeActions = [];
+
+    foreach ($actions as $action) {
+        if (substr_count($action, ':') == 1) {
+            [$actionContentType, $actionName] = explode(':', $action);
+        } else {
+            $actionContentType = $contentEntityName;
+            $actionName = $action;
+        }
+
+        if (!isset($contentTypeActions[$actionContentType])) {
+            $contentTypeActions[$actionContentType] = [];
+        }
+
+        $contentTypeActions[$actionContentType][] = $actionName;
+    }
+
+    return $contentTypeActions;
+}
+
 // Inspections
 function discoverContentEntity(ContentEntity $contentEntity): void
 {
@@ -80,9 +132,25 @@ function inspectContentEntity(ContentEntity $contentEntity): void
     $inspection->persist($db, true);
     $inspection->run();
 
-    $contentEntity->triggerActions(
-        $inspection->getContentTypeActions()
+    $contentTypeActions = \adrem\getContentTypeActionsByName(
+        $inspection->getContentTypeActions(),
+        $contentEntity::getName()
     );
+
+    \adrem\triggerContentTypeActions($contentEntity, $contentTypeActions);
+}
+
+function triggerContentTypeActions(ContentEntity $contentEntity, array $contentTypeActions): void
+{
+    foreach ($contentTypeActions as $contentTypeName => $actions) {
+        if ($contentTypeName == $contentEntity::getName()) {
+            $targetContentEntity = $contentEntity;
+        } else {
+            $targetContentEntity = \adrem\getContentEntityByContext($contentTypeName, $contentEntity);
+        }
+
+        $targetContentEntity->triggerActions($actions);
+    }
 }
 
 // Assessments
@@ -148,35 +216,44 @@ function loadModules(array $moduleNames): void
     }
 }
 
-function registerSettings(array $settings): void
+/**
+ * @param array|callable $settings
+ */
+function registerSettings($settings): void
 {
-    global $adremRegisteredSettings;
+    global $adremRegisteredSettings, $adremRegisteredSettingCallables;
 
-    if ($adremRegisteredSettings === null) {
-        $adremRegisteredSettings = [];
+    if (is_callable($settings)) {
+        if ($adremRegisteredSettingCallables === null) {
+            $adremRegisteredSettingCallables = [];
+        }
+
+        $adremRegisteredSettingCallables[] = $settings;
+    } else {
+        if ($adremRegisteredSettings === null) {
+            $adremRegisteredSettings = [];
+        }
+
+        $adremRegisteredSettings = array_merge($adremRegisteredSettings, $settings);
     }
-
-    $adremRegisteredSettings = array_merge($adremRegisteredSettings, $settings);
 }
 
 function getRegisteredSettings(): array
 {
-    global $adremRegisteredSettings;
+    global $adremRegisteredSettings, $adremRegisteredSettingCallables;
 
-    return $adremRegisteredSettings ?? [];
+    $settings = $adremRegisteredSettings ?? [];
+
+    if ($adremRegisteredSettingCallables) {
+        foreach ($adremRegisteredSettingCallables as $callable) {
+            $settings = array_merge($settings, $callable());
+        }
+    }
+
+    return $settings;
 }
 
 // miscellaneous
-function forumIsMonitored(int $forumId): bool
-{
-    $values = \adrem\getCsvSettingValues('monitored_forums');
-
-    return (
-        in_array($forumId, $values) ||
-        in_array(-1, $values)
-    );
-}
-
 function userIsMonitored(?int $userId = null): bool
 {
     $values = \adrem\getCsvSettingValues('monitored_groups');

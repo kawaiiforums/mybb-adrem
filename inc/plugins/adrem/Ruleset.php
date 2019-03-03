@@ -45,6 +45,10 @@ class Ruleset
                         $contentTypeExists = false;
                     } else {
                         $contentTypeExists = true;
+
+                        if (!\adrem\contentTypeDiscoverable($contentType)) {
+                            $results['warnings'][] = 'CONTENT_TYPE_NOT_DISCOVERABLE (' . $contentType . ')';
+                        }
                     }
 
                     foreach ($contentTypeRuleset as $conditional) {
@@ -61,8 +65,26 @@ class Ruleset
                             $results['errors'][] = 'NO_ACTIONS_ARRAY_IN_CONDITIONAL (' . $contentType . ')';
                         } elseif ($contentTypeExists) {
                             foreach ($conditional['actions'] as $action) {
-                                if (!\adrem\contentTypeActionExists($contentType, $action)) {
-                                    $results['warnings'][] = 'ACTION_NOT_FOUND (' . $contentType . ':' . $action . ')';
+                                if (substr_count($action, ':') == 1) {
+                                    [$actionContentType, $actionName] = explode(':', $action);
+                                } else {
+                                    $actionContentType = $contentType;
+                                    $actionName = $action;
+                                }
+
+                                if (
+                                    !\adrem\contentTypeExists($actionContentType) ||
+                                    !\adrem\contentTypeActionExists($actionContentType, $actionName)
+                                ) {
+                                    $results['warnings'][] = 'ACTION_NOT_FOUND (' . $actionContentType . ':' . $actionName . ')';
+                                } else {
+                                    if (
+                                        $contentTypeExists &&
+                                        $actionContentType != $contentType &&
+                                        !\adrem\contentTypeContextPassable($contentType, $actionContentType)
+                                    ) {
+                                        $results['warnings'][] = 'CONTENT_TYPE_CONTEXT_NOT_PASSABLE (' . $contentType . '->' . $actionContentType . ':' . $actionName . ')';
+                                    }
                                 }
                             }
                         }

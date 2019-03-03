@@ -53,6 +53,12 @@ class Perspective extends Assessment
                 'attributeScores' => $attributeScores,
             ];
 
+            $communityId = \adrem\getSettingValue('assessment_perspective_community_id');
+
+            if ($communityId) {
+                $requestData['communityId'] = $communityId;
+            }
+
             $responseData = \adrem\getJsonApiResponse(static::getApiEndpointUrl('comments:suggestscore'), $requestData);
 
             return $responseData !== false;
@@ -73,12 +79,12 @@ class Perspective extends Assessment
 
     protected static function getApiKey(): ?string
     {
-        return \adrem\getSettingValue('perspective_api_key');
+        return \adrem\getSettingValue('assessment_perspective_api_key');
     }
 
     protected static function requestedDoNotStore(): bool
     {
-        return (bool)\adrem\getSettingValue('perspective_do_not_store');
+        return (bool)\adrem\getSettingValue('assessment_perspective_do_not_store');
     }
 
     protected function loadAttributeValues(): bool

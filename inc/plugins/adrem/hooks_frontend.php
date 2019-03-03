@@ -325,7 +325,7 @@ function modcp_start(): void
                     $title = $lang->sprintf(
                         $lang->adrem_assessment_suggest,
                         \htmlspecialchars_uni($inspectionData['content_type']),
-                        \htmlspecialchars_uni($inspectionData['content_entity_id']),
+                        \htmlspecialchars_uni($inspectionData['content_entity_id'])
                     );
 
                     $rows = null;

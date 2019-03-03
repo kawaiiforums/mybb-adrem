@@ -66,12 +66,13 @@ Rule Groups can be used to evaluate the result of multiple Rules or nested Rule 
 - `any` (*OR* equivalent),
 - `all` (*AND* equivalent).
 
-Positive evaluation of the root Rule Group results in triggering `actions` supported for given Content Type specified in the Conditional:
+Positive evaluation of the root Rule Group results in triggering `actions` supported for given Content Type specified in the Conditional (default) or other Content Types that support context passed from it:
 ```json
-["ACTION NAME", "ACTION NAME"]
+["ACTION NAME", "CONTENT TYPE:ACTION NAME"]
 ```
 
-The Ruleset verification validates the syntax and checks availability of used Content Types, Assessments, Attributes, and Actions.
+
+The ACP's Ruleset verification validates the syntax and checks availability of used Content Types, Assessments, Attributes, and Actions.
 
 **Example** &mdash; default Ruleset:
 ```json
@@ -99,7 +100,7 @@ The Ruleset verification validates the syntax and checks availability of used Co
                     ["perspective:THREAT", ">=", "0.4"]
                 ]}
             ],
-            "actions": ["softDelete", "report"]
+            "actions": ["softDelete", "user:moderatePosts"]
         },
         {
             "rules": [
@@ -121,7 +122,8 @@ The Ruleset verification validates the syntax and checks availability of used Co
    1. assessments and their Attributes required to resolve the root Rule Group are inferred,
    2. selected Assessments are run by passing the Content Entity and a list of requested Attributes,
    3. the root Rule Group is resolved using collected Attribute values.
-3. Actions specific to Content Type are triggered.
+3. Related Content Entities are loaded by context of the initial Content Entity.
+4. Actions for requested Content Entities are triggered.
 
 ### Plugin Management Events
 - **Install:**
@@ -132,6 +134,7 @@ The Ruleset verification validates the syntax and checks availability of used Co
   - Settings deleted
   - Cache entries removed
 - **Activate:**
+  - Modules detected
   - Settings populated/updated
   - Templates & stylesheets inserted/altered
 - **Deactivate:**

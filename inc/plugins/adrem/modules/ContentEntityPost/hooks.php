@@ -7,7 +7,7 @@ function datahandler_post_insert_thread_end(\PostDataHandler $postDataHandler): 
     global $mybb;
 
     if ($postDataHandler->method == 'insert' && $postDataHandler->return_values['visible'] == 1) {
-        if (\adrem\forumIsMonitored($postDataHandler->data['fid']) && \adrem\userIsMonitored()) {
+        if (\adrem\modules\ContentEntityPost\forumIsMonitored($postDataHandler->data['fid']) && \adrem\userIsMonitored()) {
             $post = new \adrem\ContentEntity\Post();
 
             $post->setId($postDataHandler->return_values['pid']);
@@ -23,7 +23,7 @@ function datahandler_post_insert_thread_end(\PostDataHandler $postDataHandler): 
 function datahandler_post_insert_post_end(\PostDataHandler $postDataHandler): void
 {
     if ($postDataHandler->method == 'insert' && $postDataHandler->return_values['visible'] == 1) {
-        if (\adrem\forumIsMonitored($postDataHandler->data['fid']) && \adrem\userIsMonitored()) {
+        if (\adrem\modules\ContentEntityPost\forumIsMonitored($postDataHandler->data['fid']) && \adrem\userIsMonitored()) {
             $post = new \adrem\ContentEntity\Post();
 
             $post->setId($postDataHandler->return_values['pid']);
@@ -39,7 +39,7 @@ function datahandler_post_insert_post_end(\PostDataHandler $postDataHandler): vo
 function datahandler_post_update_end(\PostDataHandler $postDataHandler): void
 {
     if ($postDataHandler->method == 'update' && $postDataHandler->return_values['visible'] == 1) {
-        if (\adrem\forumIsMonitored($postDataHandler->data['fid']) && \adrem\userIsMonitored()) {
+        if (\adrem\modules\ContentEntityPost\forumIsMonitored($postDataHandler->data['fid']) && \adrem\userIsMonitored()) {
             $post = new \adrem\ContentEntity\Post();
 
             $post->setId($postDataHandler->data['pid']);
@@ -57,19 +57,23 @@ function postbit(array &$post): void
     global $mybb, $lang, $pids;
 
     if ($mybb->usergroup['canviewmodlogs']) {
-        static $inspections = null;
+        if (isset($pids)) {
+            static $inspections = null;
 
-        if (!$inspections) {
-            $lang->load('adrem');
+            if (!$inspections) {
+                $lang->load('adrem');
 
-            $entityIds = str_replace([
-                'pid IN(',
-                ')',
-                '\'',
-            ], null, $pids);
-            $entityIds = explode(',', $entityIds);
+                $entityIds = str_replace([
+                    'pid IN(',
+                    ')',
+                    '\'',
+                ], null, $pids);
+                $entityIds = explode(',', $entityIds);
 
-            $inspections = \adrem\getCompletedInspectionEntriesByContentTypeEntityId('post', $entityIds);
+                $inspections = \adrem\getCompletedInspectionEntriesByContentTypeEntityId('post', $entityIds);
+            }
+        } else {
+            $inspections = \adrem\getCompletedInspectionEntriesByContentTypeEntityId('post', [$post['pid']]);
         }
 
         if (isset($inspections[$post['pid']]) && $inspections[$post['pid']] >= $post['edittime']) {

@@ -10,6 +10,10 @@ class ContentEntity
      * Additional data that will not be logged.
      */
     protected $extendedData = null;
+    /**
+     * @var ContentEntity[]
+     */
+    protected $contextContentEntities = [];
 
     public static function getName(): string
     {
@@ -30,6 +34,21 @@ class ContentEntity
         }
 
         return $supportedActions;
+    }
+
+    public static function isDiscoverable(): bool
+    {
+        return true;
+    }
+
+    public static function acceptsContext(string $type): bool
+    {
+        return method_exists(static::class, 'assume' . lcfirst($type) . 'Context');
+    }
+
+    public static function providesContext(string $type): bool
+    {
+        return method_exists(static::class, 'get' . lcfirst($type) . 'Context');
     }
 
     public function __construct(?int $id = null)
@@ -61,6 +80,20 @@ class ContentEntity
         } else {
             $this->data = array_merge($this->data, $data);
         }
+    }
+
+    public function assumeContext(ContentEntity $contextContentEntity): bool
+    {
+        $type = $contextContentEntity::getName();
+
+        $this->contextContentEntities[$type] = $contextContentEntity;
+
+        return $this->{'assume' . lcfirst($type) . 'Context'}($contextContentEntity);
+    }
+
+    public function getContext(string $type): ContentEntity
+    {
+        return $this->{'get' . lcfirst($type) . 'Context'}();
     }
 
     public function accessibleForCurrentUser(): bool
