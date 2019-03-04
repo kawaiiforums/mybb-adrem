@@ -11,6 +11,16 @@ class Core extends Assessment
         return rand(0, 100) / 100;
     }
 
+    public function get1Attribute(): int
+    {
+        return 1;
+    }
+
+    public function get0Attribute(): int
+    {
+        return 0;
+    }
+
     public function getWordfilterMatchesAttribute(): int
     {
         global $cache;
