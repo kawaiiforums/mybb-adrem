@@ -1,7 +1,5 @@
 <?php
 
-require __DIR__ . '/hooks.php';
-
 \adrem\registerSettings([
     'assessment_perspective_api_key' => [
         'title'       => 'Perspective Assessment: API Key',
@@ -22,5 +20,3 @@ require __DIR__ . '/hooks.php';
         'value'       => '',
     ],
 ]);
-
-\adrem\addHooksNamespace('adrem\modules\AssessmentPerspective\Hooks');
