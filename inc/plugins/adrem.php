@@ -33,7 +33,7 @@ spl_autoload_register(function ($path) {
 \adrem\loadModules(\adrem\getModuleNames());
 
 // init
-define('adrem\DEVELOPMENT_MODE', 1);
+define('adrem\DEVELOPMENT_MODE', 0);
 
 // hooks
 \adrem\addHooksNamespace('adrem\Hooks');
