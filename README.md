@@ -41,9 +41,9 @@ The Ad Rem Ruleset, defined and verified on plugin's Settings page, consists of 
 
 The `rules` array consists of one root Rule Group, where multiple Rules and Groups can be nested:
 ```json
-{"RULE OPERATOR": [
-    ["ASSESSMENT:ATTRIBUTE", "COMPARISON OPERATOR=", "REFERENCE VALUE"],
-    {"RULE OPERATOR": [
+{"GROUP OPERATOR": [
+    ["ASSESSMENT:ATTRIBUTE", "COMPARISON OPERATOR", "REFERENCE VALUE"],
+    {"GROUP OPERATOR": [
         ["ASSESSMENT:ATTRIBUTE", "COMPARISON OPERATOR", "REFERENCE VALUE"],
         ["ASSESSMENT:ATTRIBUTE", "COMPARISON OPERATOR", "REFERENCE VALUE"]
     ]}
@@ -52,7 +52,7 @@ The `rules` array consists of one root Rule Group, where multiple Rules and Grou
 
 A Rule is represented as an array indicating an Assessment name and an Attribute it provides, a comparison operator, and a reference value, resulting in a true-false logical condition.
 
-**Supported rule operators**:
+**Supported rule comparison operators**:
 - `<`,
 - `<=`
 - `>`,
@@ -63,12 +63,12 @@ A Rule is represented as an array indicating an Assessment name and an Attribute
 Rule Groups can be used to evaluate the result of multiple Rules or nested Rule Groups.
 
 **Supported group operators**:
-- `any` (*OR* equivalent),
-- `all` (*AND* equivalent).
+- `any` (logical *OR* equivalent),
+- `all` (logical *AND* equivalent).
 
-Positive evaluation of the root Rule Group results in triggering `actions` supported for given Content Type specified in the Conditional (default) or other Content Types that support context passed from it:
+Positive evaluation of the root Rule Group results in triggering `actions` supported for given Content Type specified in the Conditional (default), or other Content Types that support context passed from it:
 ```json
-["ACTION NAME", "CONTENT TYPE:ACTION NAME"]
+["ACTION NAME", "RELATED CONTENT TYPE:ACTION NAME"]
 ```
 
 
