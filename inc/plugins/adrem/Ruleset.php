@@ -142,7 +142,28 @@ class Ruleset
             }
         }
 
-        return $this->getContentTypeActionsByRuleAttributeValues($contentType, $attributeValues);
+        return $this->getContentTypeActions($contentType, null, $attributeValues);
+    }
+
+    public function getContentTypeActions(string $contentType, ?Inspection $inspection = null, ?array $ruleAttributeValues = null): array
+    {
+        $actions = [];
+
+        try {
+            if (isset($this->ruleset[$contentType])) {
+                foreach ($this->ruleset[$contentType] as $contentTypeRuleset) {
+                    $result = $this->getRuleArrayResult($contentTypeRuleset['rules'], null, $inspection, $ruleAttributeValues);
+
+                    if ($result) {
+                        $actions = array_merge($actions, $contentTypeRuleset['actions']);
+                    }
+                }
+            }
+
+            return array_unique($actions);
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     protected static function getRuleArrayValidationResults(array $ruleArray, string $contentType, bool $rootLevel = false): array
@@ -220,58 +241,88 @@ class Ruleset
     /**
      * @throws \Exception
      */
-    protected static function getRuleArrayResultByRuleAttributeValues(array $ruleArray, array $ruleAttributeValues, ?string $ruleGroupOperator): bool
+    protected static function getRuleArrayResult(array $ruleArray, ?string $ruleGroupOperator, ?Inspection $inspection = null, ?array $ruleAttributeValues = null): bool
     {
+        $result = null;
+
         $itemResults = [
             'operands' => 0,
             'failed' => 0,
             'passed' => 0,
         ];
 
+        $rulesCount = count($ruleArray);
+
         foreach ($ruleArray as $item) {
             if (is_array(current($item))) {
                 $localRoleGroupOperator = array_keys($item)[0];
 
-                $itemResult = static::getRuleArrayResultByRuleAttributeValues(current($item), $ruleAttributeValues, $localRoleGroupOperator);
+                $itemResult = static::getRuleArrayResult(current($item), $localRoleGroupOperator, $inspection, $ruleAttributeValues);
             } else {
                 [$attribute, $operator, $referenceValue] = $item;
 
-                if (!isset($ruleAttributeValues[$attribute])) {
+                if ($inspection) {
+                    $attributeValue = $inspection->getAssessmentAttributeValue(...explode(':', $attribute));
+                } else {
+                    $attributeValue = $ruleAttributeValues[$attribute] ?? null;
+                }
+
+                if ($attributeValue === null) {
                     throw new \Exception('Attempting to use non-provided `' . $attribute . '` attribute');
                 }
 
-                $itemResult = static::getRuleResult($ruleAttributeValues[$attribute], $referenceValue, $operator);
+                $itemResult = static::getRuleResult($attributeValue, $referenceValue, $operator);
             }
 
             $itemResults['operands']++;
             $itemResults[$itemResult ? 'passed' : 'failed']++;
+
+            if ($ruleGroupOperator !== null) {
+                $shortCircuitResult = static::getRuleGroupResult($itemResults, $ruleGroupOperator, $rulesCount);
+
+                if ($shortCircuitResult !== null) {
+                    $result = $shortCircuitResult;
+                    break;
+                }
+            }
         }
 
         if ($ruleGroupOperator === null) {
-            return $itemResults['passed'] == 1;
-        } else {
-            $result = static::getRuleGroupResult($itemResults, $ruleGroupOperator);
+            $result = $itemResults['passed'] == 1;
         }
 
         return $result;
     }
 
-    protected static function getRuleGroupResult(array $itemResults, string $operator): bool
+    protected static function getRuleGroupResult(array $itemResults, string $operator, ?int $rulesCount): ?bool
     {
         $result = null;
 
         switch ($operator) {
             case 'any':
-                $result = $itemResults['passed'] > 0;
+                if ($itemResults['passed'] > 0) {
+                    $result = true;
+                } elseif ($rulesCount === null || $itemResults['operands'] === $rulesCount) {
+                    $result = false;
+                }
+
                 break;
             case 'all':
-                $result = $itemResults['failed'] == 0;
+                if ($itemResults['failed'] > 0) {
+                    $result = false;
+                } elseif ($rulesCount === null || $itemResults['operands'] === $rulesCount) {
+                    $result = $itemResults['failed'] == 0;
+                }
+
                 break;
         }
 
         return $result;
     }
 
+    /**
+     * @throws \Exception
+     */
     protected static function getRuleResult(string $attributeValue, string $referenceValue, string $operator): bool
     {
         switch ($operator) {
@@ -293,6 +344,8 @@ class Ruleset
             case '!=':
                 $result = $attributeValue != $referenceValue;
                 break;
+            default:
+                throw new \Exception('Attempting to use unsupported rule operator `' . $operator . '`');
         }
 
         return $result;
@@ -316,26 +369,5 @@ class Ruleset
     protected function contentTypeActiveInRuleset(string $contentType): bool
     {
         return !empty($this->getContentTypeActionsInRuleset($contentType));
-    }
-
-    protected function getContentTypeActionsByRuleAttributeValues(string $contentType, array $ruleAttributeValues): array
-    {
-        $actions = [];
-
-        try {
-            if (isset($this->ruleset[$contentType])) {
-                foreach ($this->ruleset[$contentType] as $contentTypeRuleset) {
-                    $result = $this->getRuleArrayResultByRuleAttributeValues($contentTypeRuleset['rules'], $ruleAttributeValues, null);
-
-                    if ($result) {
-                        $actions = array_merge($actions, $contentTypeRuleset['actions']);
-                    }
-                }
-            }
-
-            return array_unique($actions);
-        } catch (\Exception $e) {
-            return [];
-        }
     }
 }

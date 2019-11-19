@@ -8,6 +8,8 @@ class Inspection
     protected $completed = false;
     protected $dateCompleted;
     protected $contentTypeActions;
+    protected $declaredAssessmentsAttributes;
+    protected $assessmentsAttributeValues;
     /**
      * @var Ruleset
      */
@@ -61,13 +63,11 @@ class Inspection
 
     public function run(): void
     {
-        $assessmentAttributes = $this->getAssessmentAttributeValues(
-            $this->ruleset->getRuleAssessmentAttributesForContentType($this->contentEntity::getName())
-        );
+        $this->declaredAssessmentsAttributes = $this->ruleset->getRuleAssessmentAttributesForContentType($this->contentEntity::getName());
 
-        $this->contentTypeActions = $this->ruleset->getContentTypeActionsByAssessmentAttributeValues(
+        $this->contentTypeActions = $this->ruleset->getContentTypeActions(
             $this->contentEntity::getName(),
-            $assessmentAttributes
+            $this
         );
 
         $this->setCompleted(true);
@@ -77,31 +77,55 @@ class Inspection
         }
     }
 
-    public function getAssessmentAttributeValues(array $assessmentAttributes): array
+    /**
+     * @throws \Exception
+     */
+    public function getAssessmentAttributeValue(string $assessmentName, string $attributeName)
     {
-        $values = [];
-
-        foreach ($assessmentAttributes as $assessmentName => $attributeNames) {
-            $callable = '\adrem\Assessment\\' . ucfirst($assessmentName);
-
-            /** @var \adrem\Assessment $assessment */
-            $assessment = new $callable();
-
-            $assessment->setContentEntity($this->contentEntity);
-
-            $availableAttributes = $assessment->setRequestedAttributes($attributeNames);
-
-            if ($availableAttributes) {
-                $values[$assessmentName] = $assessment->getAttributeValues();
-
-                if ($this->getId() && $this->db) {
-                    $assessment->setInspectionId($this->getId());
-                    $assessment->persist($this->db);
-                }
-            } else {
-                $values[$assessmentName] = [];
-            }
+        if (!isset($this->declaredAssessmentsAttributes[$assessmentName])) {
+            throw new \Exception('Attempting to use undeclared assessment `' . $assessmentName . '`');
         }
+
+        if (!in_array($attributeName, $this->declaredAssessmentsAttributes[$assessmentName])) {
+            throw new \Exception('Attempting to use undeclared attribute `' . $assessmentName . ':' . $attributeName . '`');
+        }
+
+        if (!isset($this->assessmentsAttributeValues[$assessmentName])) {
+            $this->runAssessment(
+                $assessmentName,
+                $this->declaredAssessmentsAttributes[$assessmentName]
+            );
+        }
+
+        return $this->assessmentsAttributeValues[$assessmentName][$attributeName] ?? null;
+    }
+
+    public function runAssessment(string $assessmentName, $attributeNames): ?array
+    {
+        $callable = '\adrem\Assessment\\' . ucfirst($assessmentName);
+
+        /** @var \adrem\Assessment $assessment */
+        $assessment = new $callable();
+
+        $assessment->setContentEntity($this->contentEntity);
+
+        $availableAttributes = $assessment->setRequestedAttributes($attributeNames);
+
+        if ($availableAttributes) {
+            $values = $assessment->getAttributeValues();
+
+            if (\adrem\assessmentPersisted($assessmentName) && $this->getId() && $this->db) {
+                $assessment->setInspectionId($this->getId());
+                $assessment->persist($this->db);
+            }
+        } else {
+            $values = [];
+        }
+
+        $this->assessmentsAttributeValues[$assessmentName] = array_merge(
+            $this->assessmentsAttributeValues[$assessmentName] ?? [],
+            $values
+        );
 
         return $values;
     }

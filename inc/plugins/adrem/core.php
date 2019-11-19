@@ -175,6 +175,11 @@ function assessmentSupportsAttributeValueSuggestions(string $assessmentName, str
     return $class::supportsAttributeValueSuggestions($version);
 }
 
+function assessmentPersisted(string $assessmentName): bool
+{
+    return !in_array($assessmentName, \adrem\getCsvSettingValues('unlogged_assessment_names'));
+}
+
 function getAssessment(string $name, ?int $id = null): ?Assessment
 {
     if (\adrem\assessmentExists($name)) {

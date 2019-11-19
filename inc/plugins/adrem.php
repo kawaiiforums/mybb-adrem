@@ -242,6 +242,12 @@ function adrem_activate()
             'optionscode' => 'numeric',
             'value'       => '0',
         ],
+        'unlogged_assessment_names' => [
+            'title'       => 'Unlogged Assessments',
+            'description' => 'Comma-separated names of Assessments which results will not be logged.',
+            'optionscode' => 'text',
+            'value'       => 'user',
+        ],
     ];
 
     $settings = array_merge($settings, \adrem\getRegisteredSettings());
