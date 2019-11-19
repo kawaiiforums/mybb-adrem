@@ -119,9 +119,8 @@ The ACP's Ruleset verification validates the syntax and checks availability of u
 ### Data Flow
 1. *Ad Rem* receives the discovered Content Entity (usually through plugin hooks),
 2. An Inspection is run:
-   1. assessments and their Attributes required to resolve the root Rule Group are inferred,
-   2. selected Assessments are run by passing the Content Entity and a list of requested Attributes,
-   3. the root Rule Group is resolved using collected Attribute values.
+   1. Assessments and their Attributes used for the Content Type are cached (Assessment-level lazy evaluation),
+   2. Assessments necessary for short-circuit evaluation of the root Rule Group are run by passing the Content Entity and a list of Attributes.
 3. Related Content Entities are loaded by context of the initial Content Entity.
 4. Actions for requested Content Entities are triggered.
 
