@@ -113,7 +113,7 @@ class Ruleset
                     new RecursiveRuleArrayIterator($contentTypeRuleset['rules'])
                 );
 
-                $ruleAttributes = array_column(iterator_to_array($iterator), 0);
+                $ruleAttributes = array_column(iterator_to_array($iterator, false), 0);
 
                 foreach ($ruleAttributes as $ruleAttribute) {
                     [$assessmentName, $attributeName] = explode(':', $ruleAttribute);
