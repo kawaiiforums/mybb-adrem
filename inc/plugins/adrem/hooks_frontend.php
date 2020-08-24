@@ -61,6 +61,8 @@ function modcp_start(): void
     $header, $headerinclude, $footer, $theme, $modcp_nav;
 
     if ($mybb->get_input('action') == 'content_inspections') {
+        \add_breadcrumb($lang->adrem_inspection_logs);
+
         if ($mybb->usergroup['canviewmodlogs']) {
             if (
                 $mybb->get_input('type') &&
@@ -83,7 +85,7 @@ function modcp_start(): void
                 }
 
                 $title = $lang->sprintf(
-                    $lang->adrem_inspection_logs,
+                    $lang->adrem_entity_inspection_logs,
                     \htmlspecialchars_uni($mybb->get_input('type')),
                     \htmlspecialchars_uni($mybb->get_input('entity_id', \MyBB::INPUT_INT))
                 );
@@ -161,6 +163,9 @@ function modcp_start(): void
             $inspectionData = \adrem\getInspectionEntry($mybb->get_input('id', \MyBB::INPUT_INT));
 
             if ($inspectionData) {
+                \add_breadcrumb($lang->adrem_inspection_logs, 'modcp.php?action=content_inspections');
+                \add_breadcrumb($lang->adrem_inspection_details);
+
                 if (\adrem\contentEntityAccessibleForCurrentUser(
                     $inspectionData['content_type'],
                     $inspectionData['content_entity_id']
@@ -327,6 +332,9 @@ function modcp_start(): void
                         \htmlspecialchars_uni($inspectionData['content_type']),
                         \htmlspecialchars_uni($inspectionData['content_entity_id'])
                     );
+
+                    \add_breadcrumb($lang->adrem_inspection_logs, 'modcp.php?action=content_inspections');
+                    \add_breadcrumb($title);
 
                     $rows = null;
 
