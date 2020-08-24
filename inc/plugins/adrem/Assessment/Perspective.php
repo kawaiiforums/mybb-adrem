@@ -45,7 +45,7 @@ class Perspective extends Assessment
 
             $requestData = [
                 'comment' => [
-                    'text' => $this->contentEntity->getData()['content'],
+                    'text' => \adrem\getPlaintextContent($this->contentEntity->getData()['content']),
                 ],
                 'languages' => [
                     'en',
@@ -91,7 +91,7 @@ class Perspective extends Assessment
     {
         $requestData = [
             'comment' => [
-                'text' => $this->contentEntity->getData()['content'],
+                'text' => \adrem\getPlaintextContent($this->contentEntity->getData()['content']),
             ],
             'languages' => [
                 'en',

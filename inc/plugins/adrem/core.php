@@ -357,3 +357,12 @@ function getJsonApiResponse(string $url, ?array $data = null)
 
     return false;
 }
+
+function getPlaintextContent(string $message): string
+{
+    require_once MYBB_ROOT . 'inc/class_parser.php';
+
+    $parser = new \postParser();
+
+    return $parser->text_parse_message($message);
+}
