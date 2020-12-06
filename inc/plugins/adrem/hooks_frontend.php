@@ -365,3 +365,13 @@ function modcp_start(): void
         }
     }
 }
+
+function task_logcleanup(): void
+{
+    global $mybb, $db;
+
+    if ($mybb->config['log_pruning']['mod_logs'] > 0) {
+        $cutoff = TIME_NOW - ($mybb->config['log_pruning']['mod_logs'] * 86400);
+        $db->delete_query('adrem_inspections', 'completed = 1 AND date_completed < ' . (int)$cutoff);
+    }
+}
