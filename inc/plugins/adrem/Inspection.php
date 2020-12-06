@@ -8,11 +8,11 @@ class Inspection
     protected $completed = false;
     protected $dateCompleted;
     protected $contentTypeActions;
-    protected $declaredAssessmentsAttributes;
-    protected $assessmentsAttributeValues;
-    /**
-     * @var Ruleset
-     */
+    protected $declaredRevisionsAssessmentsAttributes = [];
+    protected $revisionsAssessmentsAttributeValues;
+    protected $eventNames = [];
+
+    /** @var Ruleset */
     protected $ruleset;
 
     /** @var ContentEntity */
@@ -59,12 +59,21 @@ class Inspection
         $this->contentEntity = $contentEntity;
     }
 
+    public function setEventName(?string $eventName): void
+    {
+        $this->eventNames = [$eventName];
+    }
+
     public function run(): void
     {
-        $this->declaredAssessmentsAttributes = $this->ruleset->getRuleAssessmentAttributesForContentType($this->contentEntity::getName());
+        $this->declaredRevisionsAssessmentsAttributes = $this->ruleset->getRuleAssessmentAttributesForContentType(
+            $this->contentEntity::getName(),
+            $this->eventNames
+        );
 
         $this->contentTypeActions = $this->ruleset->getContentTypeActions(
             $this->contentEntity::getName(),
+            $this->eventNames,
             $this
         );
 
@@ -78,41 +87,56 @@ class Inspection
     /**
      * @throws \Exception
      */
-    public function getAssessmentAttributeValue(string $assessmentName, string $attributeName)
+    public function getAssessmentAttributeValue(string $assessmentName, string $attributeName, ?string $contentEntityRevision = null)
     {
-        if (!isset($this->declaredAssessmentsAttributes[$assessmentName])) {
+        if ($contentEntityRevision === null) {
+            $contentEntityRevision = $this->contentEntity->getDefaultRevision();
+        }
+
+        if (!isset($this->declaredRevisionsAssessmentsAttributes[$contentEntityRevision][$assessmentName])) {
             throw new \Exception('Attempting to use undeclared assessment `' . $assessmentName . '`');
         }
 
-        if (!in_array($attributeName, $this->declaredAssessmentsAttributes[$assessmentName])) {
+        if (!in_array($attributeName, $this->declaredRevisionsAssessmentsAttributes[$contentEntityRevision][$assessmentName])) {
             throw new \Exception('Attempting to use undeclared attribute `' . $assessmentName . ':' . $attributeName . '`');
         }
 
-        if (!isset($this->assessmentsAttributeValues[$assessmentName])) {
+        if (!isset($this->revisionsAssessmentsAttributeValues[$contentEntityRevision][$assessmentName])) {
             $this->runAssessment(
                 $assessmentName,
-                $this->declaredAssessmentsAttributes[$assessmentName]
+                $this->declaredRevisionsAssessmentsAttributes[$contentEntityRevision][$assessmentName],
+                $contentEntityRevision
             );
         }
 
-        return $this->assessmentsAttributeValues[$assessmentName][$attributeName] ?? null;
+        return $this->revisionsAssessmentsAttributeValues[$contentEntityRevision][$assessmentName][$attributeName] ?? null;
     }
 
-    public function runAssessment(string $assessmentName, $attributeNames): ?array
+    public function runAssessment(string $assessmentName, array $attributeNames, ?string $contentEntityRevision = null): ?array
     {
         $callable = '\adrem\Assessment\\' . ucfirst($assessmentName);
 
         /** @var \adrem\Assessment $assessment */
         $assessment = new $callable();
 
+        if ($contentEntityRevision === null) {
+            $contentEntityRevision = $this->contentEntity->getDefaultRevision();
+        }
+
         $assessment->setContentEntity($this->contentEntity);
+        $assessment->setContentEntityRevision($contentEntityRevision);
 
         $availableAttributes = $assessment->setRequestedAttributes($attributeNames);
 
         if ($availableAttributes) {
             $values = $assessment->getAttributeValues();
 
-            if (\adrem\assessmentPersisted($assessmentName) && $this->getId() && $this->db) {
+            if (
+                $contentEntityRevision === $this->contentEntity->getDefaultRevision() &&
+                \adrem\assessmentPersisted($assessmentName) &&
+                $this->getId() &&
+                $this->db
+            ) {
                 $assessment->setInspectionId($this->getId());
                 $assessment->persist($this->db);
             }
@@ -120,8 +144,8 @@ class Inspection
             $values = [];
         }
 
-        $this->assessmentsAttributeValues[$assessmentName] = array_merge(
-            $this->assessmentsAttributeValues[$assessmentName] ?? [],
+        $this->revisionsAssessmentsAttributeValues[$contentEntityRevision][$assessmentName] = array_merge(
+            $this->revisionsAssessmentsAttributeValues[$contentEntityRevision][$assessmentName] ?? [],
             $values
         );
 

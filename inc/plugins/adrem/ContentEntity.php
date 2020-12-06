@@ -5,11 +5,12 @@ namespace adrem;
 class ContentEntity
 {
     protected $id;
-    protected $data = null;
+    protected $defaultRevision = 'current';
+    protected $data = [];
     /**
      * Additional data that will not be logged.
      */
-    protected $extendedData = null;
+    protected $extendedData = [];
     /**
      * @var ContentEntity[]
      */
@@ -68,18 +69,33 @@ class ContentEntity
         $this->id = $id;
     }
 
-    public function getData(): ?array
+    public function getData(bool $extended = false, ?string $revision = null): ?array
     {
-        return $this->data;
+        if ($revision === null) {
+            $revision = $this->defaultRevision;
+        }
+
+        $returnData = $this->data[$revision];
+
+        if ($extended) {
+            $returnData = array_merge($returnData, $this->extendedData[$revision]);
+        }
+
+        return $returnData;
     }
 
-    public function setData(array $data): void
+    public function setData(array $data, ?string $revision = null): void
     {
-        if ($this->data === null) {
-            $this->data = $data;
-        } else {
-            $this->data = array_merge($this->data, $data);
+        if ($revision === null) {
+            $revision = $this->defaultRevision;
         }
+
+        $this->data[$revision] = array_merge($this->data[$revision] ?? [], $data);
+    }
+
+    public function getDefaultRevision(): string
+    {
+        return $this->defaultRevision;
     }
 
     public function assumeContext(ContentEntity $contextContentEntity): bool

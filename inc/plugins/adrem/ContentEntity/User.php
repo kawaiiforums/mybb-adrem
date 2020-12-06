@@ -11,26 +11,24 @@ class User extends ContentEntity
         return false;
     }
 
-    public function getData(bool $extended = false): ?array
+    public function getData(bool $extended = false, ?string $revision = null): ?array
     {
-        if ($this->data === null || ($extended && $this->extendedData === null)) {
+        if ($revision === null) {
+            $revision = $this->defaultRevision;
+        }
+
+        if (!isset($this->data[$revision]) || ($extended && !isset($this->extendedData[$revision]))) {
             $data = \get_user($this->id);
 
             if ($data !== false) {
-                $this->data = $data;
-                $this->extendedData = $data;
+                $this->data[$revision] = $data;
+                $this->extendedData[$revision] = $data;
             } else {
                 return null;
             }
         }
 
-        $returnData = $this->data;
-
-        if ($extended) {
-            $returnData = array_merge($returnData, $this->extendedData);
-        }
-
-        return $returnData;
+        return parent::getData($extended, $revision);
     }
 
     public function assumePostContext(Post $contentEntity): bool

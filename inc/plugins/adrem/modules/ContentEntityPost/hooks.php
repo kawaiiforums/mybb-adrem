@@ -32,20 +32,7 @@ function admin_config_plugins_deactivate_commit(): void
 
 function datahandler_post_insert_thread_end(\PostDataHandler $postDataHandler): void
 {
-    global $mybb;
-
-    if ($postDataHandler->method == 'insert' && $postDataHandler->return_values['visible'] == 1) {
-        if (\adrem\modules\ContentEntityPost\forumIsMonitored($postDataHandler->data['fid']) && \adrem\userIsMonitored()) {
-            $post = new \adrem\ContentEntity\Post();
-
-            $post->setId($postDataHandler->return_values['pid']);
-            $post->setData([
-                'content' => $postDataHandler->data['message'],
-            ]);
-
-            \adrem\discoverContentEntity($post);
-        }
-    }
+    datahandler_post_insert_post_end($postDataHandler);
 }
 
 function datahandler_post_insert_post_end(\PostDataHandler $postDataHandler): void
@@ -56,26 +43,44 @@ function datahandler_post_insert_post_end(\PostDataHandler $postDataHandler): vo
 
             $post->setId($postDataHandler->return_values['pid']);
             $post->setData([
+                'title' => $postDataHandler->data['subject'],
                 'content' => $postDataHandler->data['message'],
             ]);
 
-            \adrem\discoverContentEntity($post);
+            \adrem\discoverContentEntity($post, 'insert');
         }
     }
 }
 
+function datahandler_post_update(\PostDataHandler $postDataHandler):  void
+{
+    global $adremRuntimeRegistry;
+
+    $adremRuntimeRegistry['existingPost'] = get_post($postDataHandler->data['pid']);
+}
+
 function datahandler_post_update_end(\PostDataHandler $postDataHandler): void
 {
+    global $adremRuntimeRegistry;
+
     if ($postDataHandler->method == 'update' && $postDataHandler->return_values['visible'] == 1) {
         if (\adrem\modules\ContentEntityPost\forumIsMonitored($postDataHandler->data['fid']) && \adrem\userIsMonitored()) {
             $post = new \adrem\ContentEntity\Post();
 
             $post->setId($postDataHandler->data['pid']);
             $post->setData([
+                'title' => $postDataHandler->data['subject'],
                 'content' => $postDataHandler->data['message'],
             ]);
 
-            \adrem\discoverContentEntity($post);
+            if (isset($adremRuntimeRegistry['existingPost'])) {
+                $post->setData([
+                    'title' => $adremRuntimeRegistry['existingPost']['subject'],
+                    'content' => $adremRuntimeRegistry['existingPost']['message'],
+                ], 'previous');
+            }
+
+            \adrem\discoverContentEntity($post, 'update');
         }
     }
 }

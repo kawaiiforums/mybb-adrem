@@ -9,6 +9,7 @@ class Assessment
      * @var ContentEntity
      */
     protected $contentEntity;
+    protected $contentEntityRevision;
     protected $inspectionId;
     protected $requestedAttributes = [];
     protected $attributeValues = [];
@@ -49,6 +50,16 @@ class Assessment
     public function setContentEntity(ContentEntity $contentEntity): void
     {
         $this->contentEntity = $contentEntity;
+    }
+
+    public function setContentEntityRevision(string $revision): void
+    {
+        $this->contentEntityRevision = $revision;
+    }
+
+    public function getContentEntityData(bool $extended = false): ?array
+    {
+        return $this->contentEntity->getData($extended, $this->contentEntityRevision);
     }
 
     public function setInspectionId(int $inspectionId): void

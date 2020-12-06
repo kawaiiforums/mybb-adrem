@@ -115,12 +115,12 @@ function getContentTypeActionsByName(array $actions, string $contentEntityName):
 }
 
 // Inspections
-function discoverContentEntity(ContentEntity $contentEntity): void
+function discoverContentEntity(ContentEntity $contentEntity, ?string $eventName = null): void
 {
-    \adrem\inspectContentEntity($contentEntity);
+    \adrem\inspectContentEntity($contentEntity, $eventName);
 }
 
-function inspectContentEntity(ContentEntity $contentEntity): void
+function inspectContentEntity(ContentEntity $contentEntity, ?string $eventName = null): void
 {
     global $db;
 
@@ -128,6 +128,7 @@ function inspectContentEntity(ContentEntity $contentEntity): void
 
     $inspection->setRuleset(\adrem\getRuleset());
     $inspection->setContentEntity($contentEntity);
+    $inspection->setEventName($eventName);
 
     $inspection->persist($db, true);
     $inspection->run();

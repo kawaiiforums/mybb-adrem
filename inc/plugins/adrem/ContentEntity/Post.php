@@ -11,28 +11,27 @@ class Post extends ContentEntity
         return \get_post_link($this->id) . '#pid' . $this->id;
     }
 
-    public function getData(bool $extended = false): ?array
+    public function getData(bool $extended = false, ?string $revision = null): ?array
     {
-        if ($this->data === null || ($extended && $this->extendedData === null)) {
-            $post = \get_post($this->id);
+        if ($revision === null) {
+            $revision = $this->defaultRevision;
+        }
 
-            if ($post !== false) {
-                $this->data = [
-                    'content' => $post['message'],
+        if (!isset($this->data[$revision]) || ($extended && !isset($this->extendedData[$revision]))) {
+            $data = \get_post($this->id);
+
+            if ($data !== false) {
+                $this->data[$revision] = [
+                    'title' => $data['subject'],
+                    'content' => $data['message'],
                 ];
-                $this->extendedData = $post;
+                $this->extendedData[$revision] = $data;
             } else {
                 return null;
             }
         }
 
-        $returnData = $this->data;
-
-        if ($extended) {
-            $returnData = array_merge($returnData, $this->extendedData);
-        }
-
-        return $returnData;
+        return parent::getData($extended, $revision);
     }
 
     public function accessibleForCurrentUser(): bool

@@ -66,6 +66,10 @@ class Ruleset
                     }
 
                     foreach ($contentTypeRuleset as $conditional) {
+                        if (isset($conditional['events']) && !is_array($conditional['events'])) {
+                            $results['errors'][] = ['EVENT_LIST_NOT_AN_ARRAY', compact('contentType')];
+                        }
+
                         if (!isset($conditional['rules']) || !is_array($conditional['rules'])) {
                             $results['errors'][] = ['NO_RULES_ARRAY_IN_CONDITIONAL', compact('contentType')];
                         } else {
@@ -117,27 +121,46 @@ class Ruleset
         $this->ruleset = $ruleset;
     }
 
-    public function getRuleAssessmentAttributesForContentType(string $contentType): array
+    public function getRuleAssessmentAttributesForContentType(string $contentType, array $events = []): array
     {
         $assessmentAttributes = [];
 
         if (isset($this->ruleset[$contentType])) {
             foreach ($this->ruleset[$contentType] as $contentTypeRuleset) {
-                $iterator = new \RecursiveIteratorIterator(
-                    new RecursiveRuleArrayIterator($contentTypeRuleset['rules'])
-                );
+                if (!isset($contentTypeRuleset['events']) || array_intersect($contentTypeRuleset['events'], $events)) {
+                    $iterator = new \RecursiveIteratorIterator(
+                        new RecursiveRuleArrayIterator($contentTypeRuleset['rules'])
+                    );
 
-                $ruleAttributes = array_column(iterator_to_array($iterator, false), 0);
+                    $rules = iterator_to_array($iterator, false);
 
-                foreach ($ruleAttributes as $ruleAttribute) {
-                    [$assessmentName, $attributeName] = explode(':', $ruleAttribute);
+                    foreach ($rules as $rule) {
+                        extract(self::getRuleFromSimpleArray($rule));
+                        /**
+                         * @var string $assessmentName
+                         * @var string $attributeName
+                         * @var string $operator
+                         * @var string $referenceValue
+                         * @var array $flags
+                         */
 
-                    if (!isset($assessmentAttributes[$assessmentName])) {
-                        $assessmentAttributes[$assessmentName] = [];
-                    }
+                        $revisions = [
+                            getContentEntity($contentType)->getDefaultRevision(),
+                        ];
 
-                    if (!in_array($attributeName, $assessmentAttributes[$assessmentName])) {
-                        $assessmentAttributes[$assessmentName][] = $attributeName;
+                        if (in_array('change', $flags)) {
+                            $revisions[] = 'previous';
+                        }
+
+                        foreach ($revisions as $revision) {
+                            if (!isset($assessmentAttributes[$revision][$assessmentName])) {
+                                $assessmentAttributes[$revision][$assessmentName] = [];
+                            }
+
+                            if (!in_array($attributeName, $assessmentAttributes[$revision][$assessmentName])) {
+                                $assessmentAttributes[$revision][$assessmentName][] = $attributeName;
+                            }
+                        }
                     }
                 }
             }
@@ -146,30 +169,34 @@ class Ruleset
         return $assessmentAttributes;
     }
 
-    public function getContentTypeActionsByAssessmentAttributeValues(string $contentType, array $assessmentAttributeValues): array
+    public function getContentTypeActionsByAssessmentAttributeValues(string $contentType, array $events = [], array $assessmentResults = []): array
     {
         $attributeValues = [];
 
-        foreach ($assessmentAttributeValues as $assessmentName => $assessmentAttributeValueSet) {
-            foreach ($assessmentAttributeValueSet as $attributeName => $value) {
-                $attributeValues[$assessmentName . ':' . $attributeName] = $value;
+        foreach ($assessmentResults as $revision => $assessmentAttributeValues) {
+            foreach ($assessmentAttributeValues as $assessmentName => $assessmentAttributeValueSet) {
+                foreach ($assessmentAttributeValueSet as $attributeName => $value) {
+                    $attributeValues[$revision][$assessmentName . ':' . $attributeName] = $value;
+                }
             }
         }
 
-        return $this->getContentTypeActions($contentType, null, $attributeValues);
+        return $this->getContentTypeActions($contentType, $events, null, $attributeValues);
     }
 
-    public function getContentTypeActions(string $contentType, ?Inspection $inspection = null, ?array $ruleAttributeValues = null): array
+    public function getContentTypeActions(string $contentType, array $events = [], ?Inspection $inspection = null, ?array $ruleAttributeValues = null): array
     {
         $actions = [];
 
         try {
             if (isset($this->ruleset[$contentType])) {
                 foreach ($this->ruleset[$contentType] as $contentTypeRuleset) {
-                    $result = $this->getRuleArrayResult($contentTypeRuleset['rules'], null, $inspection, $ruleAttributeValues);
+                    if (!isset($contentTypeRuleset['events']) || array_intersect($contentTypeRuleset['events'], $events)) {
+                        $result = $this->getRuleArrayResult($contentTypeRuleset['rules'], null, $inspection, $ruleAttributeValues);
 
-                    if ($result) {
-                        $actions = array_merge($actions, $contentTypeRuleset['actions']);
+                        if ($result === true) {
+                            $actions = array_merge($actions, $contentTypeRuleset['actions']);
+                        }
                     }
                 }
             }
@@ -205,6 +232,7 @@ class Ruleset
                                  * @var string $attributeName
                                  * @var string $operator
                                  * @var string $referenceValue
+                                 * @var array $flags
                                  */
 
                                 if (!\adrem\assessmentExists($assessmentName)) {
@@ -269,11 +297,29 @@ class Ruleset
                 if ($inspection) {
                     $attributeValue = $inspection->getAssessmentAttributeValue($rule['assessmentName'], $rule['attributeName']);
                 } else {
-                    $attributeValue = $ruleAttributeValues[$attribute] ?? null;
+                    $revision = 'current';
+
+                    $attributeValue = $ruleAttributeValues[$revision][$rule['attributeName']] ?? null;
                 }
 
                 if ($attributeValue === null) {
-                    throw new \Exception('Attempting to use non-provided `' . $attribute . '` attribute');
+                    throw new \Exception('Attempting to use non-provided `' . $rule['attributeName'] . '` attribute');
+                }
+
+                if (in_array('change', $rule['flags'])) {
+                    $revision = 'previous';
+
+                    if ($inspection) {
+                        $previousAttributeValue = $inspection->getAssessmentAttributeValue($rule['assessmentName'], $rule['attributeName'], $revision);
+                    } else {
+                        $previousAttributeValue = $ruleAttributeValues[$revision][$rule['attributeName']] ?? null;
+                    }
+
+                    if ($previousAttributeValue === null) {
+                        throw new \Exception('Attempting to use non-provided `' . $rule['attributeName'] . '` attribute (revision: `' . $revision . '`)');
+                    }
+
+                    $attributeValue -= $previousAttributeValue;
                 }
 
                 $itemResult = static::getRuleResult($attributeValue, $rule['referenceValue'], $rule['operator']);
@@ -359,6 +405,12 @@ class Ruleset
     protected static function getRuleFromSimpleArray(array $array): array
     {
         [$attribute, $operator, $referenceValue] = $array;
+        $flags = [];
+
+        if (mb_substr($attribute, 0, 1) === "\u{0394}") { // Δ
+            $flags[] = 'change';
+            $attribute = mb_substr($attribute, 1);
+        }
 
         if (substr_count($attribute, ':') !== 1) {
             throw new \UnexpectedValueException('RULE_ATTRIBUTE_INVALID');
@@ -370,6 +422,7 @@ class Ruleset
                 'attributeName' => $attributeName,
                 'operator' => $operator,
                 'referenceValue' => $referenceValue,
+                'flags' => $flags,
             ];
         }
     }
@@ -382,7 +435,9 @@ class Ruleset
 
         if (!empty($contentTypeRulesetArray)) {
             foreach ($contentTypeRulesetArray as $contentTypeRuleset) {
-                $actions[] = array_merge($actions, $contentTypeRuleset['actions']);
+                if (!isset($contentTypeRuleset['events']) || array_intersect($contentTypeRuleset['events'], $events)) {
+                    $actions[] = array_merge($actions, $contentTypeRuleset['actions']);
+                }
             }
         }
 
