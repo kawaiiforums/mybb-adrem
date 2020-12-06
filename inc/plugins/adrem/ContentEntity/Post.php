@@ -73,18 +73,31 @@ class Post extends ContentEntity
 
     public function triggerReportAction(): bool
     {
+        global $db;
+
         require_once MYBB_ROOT . 'inc/functions_modcp.php';
 
-        $report = [
-            'id' => $this->getData(true)['pid'],
-            'id2' => $this->getData(true)['tid'],
-            'id3' => $this->getData(true)['fid'],
-            'uid' => \adrem\getSettingValue('action_user'),
-            'reasonid' => 1,
-            'reason' => 'Ad Rem',
-        ];
+        $count = $db->fetch_field(
+            $db->simple_select(
+                'reportedcontent',
+                'COUNT(*) AS n',
+                "reportstatus != 1 AND id = " . (int)$this->getData(true)['pid'] . " AND type = 'post'"
+            ),
+            'n'
+        );
 
-        \add_report($report, 'post');
+        if ($count == 0) {
+            $report = [
+                'id' => $this->getData(true)['pid'],
+                'id2' => $this->getData(true)['tid'],
+                'id3' => $this->getData(true)['fid'],
+                'uid' => \adrem\getSettingValue('action_user'),
+                'reasonid' => 1,
+                'reason' => 'Ad Rem',
+            ];
+
+            \add_report($report, 'post');
+        }
 
         return true;
     }
