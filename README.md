@@ -1,76 +1,55 @@
+<img align="left" src="https://raw.githubusercontent.com/kawaiiforums/mybb-adrem/master/.github/logomark-400h.png" height="80">
+
 # Ad Rem
 
 A MyBB extension that executes moderation actions based on content quality.
 
-Inspects discovered content by feeding Content Entity data to modular Assessments providing Attribute values used to conditionally trigger actions, resulting in automated content moderation.
+Inspects discovered content by feeding Content Entity data to modular Assessments to conditionally trigger Actions, resulting in automated content moderation.
 
 ### Features
 - #### Flexible Rules
-  Actions are executed automatically, depending on the Ruleset defined and validated in the Administration Control Panel.
+  Actions are executed automatically, depending on the JSON Ruleset defined and validated on the plugin's Settings page in the Administration Control Panel.
 - #### Inspection & Assessment Logs and Statuses
-  Icons indicating Inspection statuses (_not inspected_, _inspected_, or _actions taken_) lead to _Inspection Logs_ in the Moderator Control Panel.
+  Icons indicating latest Inspection status lead to _Inspection Logs_ in the Moderator Control Panel.
+  
+  Plugin-generated logs are pruned according to MyBB's moderator log retention period ([`$config['log_pruning']['mod_logs']`](https://docs.mybb.com/1.8/administration/configuration-file/)).
 
 ### Dependencies
 - MyBB 1.8.x
 - https://github.com/frostschutz/MyBB-PluginLibrary
 - PHP >= 7.1
 
+---
+
 ### Ruleset
-The Ad Rem Ruleset, defined and verified on plugin's Settings page, consists of { `rules` → `actions` } Conditionals for each Content Type in the JSON format:
+The Ad Rem Ruleset JSON object consists of properties with unique Content Type names as keys and arrays of attached Conditionals as values (`{Object<string, Conditional[]>} ruleset`).
 
-```json
-{
-    "CONTENT TYPE": [
-        {
-            "rules": [],
-            "actions": []
-        },
-        {
-            "rules": [],
-            "actions": []
-        }
-    ],
-    "CONTENT TYPE": [
-        {
-            "rules": [],
-            "actions": []
-        }
-    ]
-}
-```
+A **Conditional** consists of the following properties:
+- `{string[]} [events]` - event names the Conditional applies to (or all events if not specified),
+- `{RuleGroup[]} rules` - an array containing the root Rule Group,
+- `{string[]} actions` - an array containing the names of Actions to run on positive result.
 
-The `rules` array consists of one root Rule Group, where multiple Rules and Groups can be nested:
-```json
-{"GROUP OPERATOR": [
-    ["ASSESSMENT:ATTRIBUTE", "COMPARISON OPERATOR", "REFERENCE VALUE"],
-    {"GROUP OPERATOR": [
-        ["ASSESSMENT:ATTRIBUTE", "COMPARISON OPERATOR", "REFERENCE VALUE"],
-        ["ASSESSMENT:ATTRIBUTE", "COMPARISON OPERATOR", "REFERENCE VALUE"]
-    ]}
-]}
-```
+A **Rule Group** is a truth function that consists of a property with a Group Operator as key and an array of linked Rules and/or Rule Groups as value (`{Object<string, Array<Rule|RuleGroup>>}`).
 
-A Rule is represented as an array indicating an Assessment name and an Attribute it provides, a comparison operator, and a reference value, resulting in a true-false logical condition.
-
-**Supported rule comparison operators**:
-- `<`,
-- `<=`
-- `>`,
-- `>=`,
-- `=`,
-- `!=`.
-
-Rule Groups can be used to evaluate the result of multiple Rules or nested Rule Groups.
-
-**Supported group operators**:
+Supported Group Operators:
 - `any` (logical *OR* equivalent),
 - `all` (logical *AND* equivalent).
 
-Positive evaluation of the root Rule Group results in triggering `actions` supported for given Content Type specified in the Conditional (default), or other Content Types that support context passed from it:
-```json
-["ACTION NAME", "RELATED CONTENT TYPE:ACTION NAME"]
-```
+A **Rule** is a true/false logical condition and is represented as an array that consists of the following elements:
+1. `{string}` an Assessment name and an Attribute it provides, separated with a colon (`:`),
+   - if preceded with `Δ`, the change in value between two revisions of data is used (the value in revision named `previous` is subtracted from the value in revision named `current`)
+2. `{string}` a Rule Comparison Operator,
+3. `{string}` a reference value.
 
+Supported Rule Comparison Operators:
+- `<` (less than),
+- `<=` (less than or equal to),
+- `>` (greater than),
+- `>=` (greater than or equal to),
+- `=` (equal to),
+- `!=` (not equal to).
+
+An **Action** supported by the inspected Content Type, or other Content Types that accept context passed from it (e.g. the author of inspected post), may be triggered on positive evaluation of the root Rule Group. Names of Actions triggered in related Content Types are preceded by the Content Type name and separated with a colon (e.g. `user:warn`).
 
 The ACP's Ruleset verification validates the syntax and checks availability of used Content Types, Assessments, Attributes, and Actions.
 
@@ -81,7 +60,7 @@ The ACP's Ruleset verification validates the syntax and checks availability of u
         {
             "rules": [
                 {"any": [
-                    ["core:wordfilterMatches", ">=", "3"]
+                    ["core:wordfilterCount", ">=", "3"]
                 ]}
             ],
             "actions": ["softDelete"]
@@ -89,10 +68,24 @@ The ACP's Ruleset verification validates the syntax and checks availability of u
     ]
 }
 ```
-**Example** - Conversation AI's [Perspective API](https://github.com/conversationai/perspectiveapi):
+**Example** - using Conversation AI's [Perspective API](https://github.com/conversationai/perspectiveapi), and checking for added links on post edit:
 ```json
 {
     "post": [
+        {
+            "rules": [
+                {"any": [
+                    ["perspective:INCOHERENT", ">=", "0.75"],
+                    ["perspective:SPAM", ">=", "0.75"],
+                    ["perspective:UNSUBSTANTIAL", ">=", "0.75"],
+                    {"all": [
+                        ["perspective:FLIRTATION", ">=", "0.75"],
+                        ["perspective:SEXUALLY_EXPLICIT", ">=", "0.75"]
+                    ]}
+                ]}
+            ],
+            "actions": ["report"]
+        },
         {
             "rules": [
                 {"any": [
@@ -100,14 +93,14 @@ The ACP's Ruleset verification validates the syntax and checks availability of u
                     ["perspective:THREAT", ">=", "0.4"]
                 ]}
             ],
-            "actions": ["softDelete", "user:moderatePosts"]
+            "actions": ["report", "softDelete", "user:moderatePosts"]
         },
+
         {
+            "events": ["update"],
             "rules": [
                 {"any": [
-                    ["perspective:INCOHERENT", ">=", "0.75"],
-                    ["perspective:SPAM", ">=", "0.75"],
-                    ["perspective:UNSUBSTANTIAL", ">=", "0.75"]
+                    ["Δcore:mycodeLinkCount", ">=", "1"]
                 ]}
             ],
             "actions": ["report"]
@@ -115,14 +108,6 @@ The ACP's Ruleset verification validates the syntax and checks availability of u
     ]
 }
 ```
-
-### Data Flow
-1. *Ad Rem* receives the discovered Content Entity (usually through plugin hooks),
-2. An Inspection is run:
-   1. Assessments and their Attributes used for the Content Type are cached (Assessment-level lazy evaluation),
-   2. Assessments necessary for short-circuit evaluation of the root Rule Group are run by passing the Content Entity and a list of Attributes.
-3. Related Content Entities are loaded by context of the initial Content Entity.
-4. Actions for requested Content Entities are triggered.
 
 ### Plugin Management Events
 - **Install:**
