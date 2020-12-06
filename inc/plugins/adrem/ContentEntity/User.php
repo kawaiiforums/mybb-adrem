@@ -42,7 +42,7 @@ class User extends ContentEntity
 
     public function triggerBanAction(): bool
     {
-        global $mybb, $cache, $db;
+        global $db;
 
         if (array_key_exists(\adrem\getSettingValue('contententity_user_ban_time'), \fetch_ban_times())) {
             if ($this->getData(true)) {
@@ -81,8 +81,6 @@ class User extends ContentEntity
                     ];
 
                     $db->update_query('users', $update_array, 'uid = ' . (int)$this->id);
-
-                    $cache->update_banned();
                 }
             }
         }
@@ -92,7 +90,7 @@ class User extends ContentEntity
 
     public function triggerModeratePostsAction(): bool
     {
-        global $mybb, $db;
+        global $db;
 
         if ($this->getData(true)) {
             $expirationTime = \TIME_NOW + (int)\adrem\getSettingValue('contententity_user_moderation_time');

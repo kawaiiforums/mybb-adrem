@@ -21,7 +21,7 @@ $l['adrem_assessment_suggested_attribute_values'] = 'Suggested Attribute Values'
 $l['adrem_assessment_attribute_name'] = 'Attribute Name';
 $l['adrem_assessment_attribute_value'] = 'Attribute Value';
 $l['adrem_assessment_attribute_suggested_value'] = 'Suggested Attribute Value';
-$l['adrem_assesment_result_data'] = 'Result Data';
+$l['adrem_assessment_result_data'] = 'Result Data';
 
 $l['adrem_inspection_show_inspection'] = 'Show Inspection';
 $l['adrem_show_entity_inspections'] = 'Entity Inspections';

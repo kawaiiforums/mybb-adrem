@@ -93,7 +93,7 @@ function modcp_start(): void
                 $contentEntityId = $mybb->get_input('entity_id', \MyBB::INPUT_INT);
                 $baseurl = 'modcp.php?action=content_inspections&amp;type=' . $contentType . '&amp;entity_id=' . $contentEntityId;
 
-                eval('$request .= "' . \adrem\tpl('modcp_inspections_request') . '";');
+                eval('$request = "' . \adrem\tpl('modcp_inspections_request') . '";');
             } else {
                 $title = $lang->adrem_inspection_logs;
                 $contentType = null;
@@ -147,7 +147,7 @@ function modcp_start(): void
                     }
                 }
             } else {
-                eval('$results .= "' . \adrem\tpl('modcp_inspections_none') . '";');
+                eval('$results = "' . \adrem\tpl('modcp_inspections_none') . '";');
             }
 
             $resultspages = $listManager->pagination();
@@ -197,7 +197,7 @@ function modcp_start(): void
                             eval('$contentEntityDataItems .= "' . \adrem\tpl('modcp_inspection_content_entity_data_item') . '";');
                         }
 
-                        eval('$contentEntityData .= "' . \adrem\tpl('modcp_inspection_content_entity_data') . '";');
+                        eval('$contentEntityData = "' . \adrem\tpl('modcp_inspection_content_entity_data') . '";');
                     } else {
                         $contentEntityData = null;
                     }
@@ -270,7 +270,7 @@ function modcp_start(): void
                             eval('$assessments .= "' . \adrem\tpl('modcp_inspection_assessment') . '";');
                         }
 
-                        eval('$inspectionAssessments .= "' . \adrem\tpl('modcp_inspection_assessments') . '";');
+                        eval('$inspectionAssessments = "' . \adrem\tpl('modcp_inspection_assessments') . '";');
                     } else {
                         $inspectionAssessments = null;
                     }

@@ -18,11 +18,11 @@ class Assessment
 
     const VERSION = '1';
 
-    public static function getName()
+    public static function getName(): string
     {
-        return lcfirst(
-            end(explode('\\', get_called_class()))
-        );
+        $chain = explode('\\', get_called_class());
+
+        return lcfirst(end($chain));
     }
 
     public static function getProvidedAttributes(): array

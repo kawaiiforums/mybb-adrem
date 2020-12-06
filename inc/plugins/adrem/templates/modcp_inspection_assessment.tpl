@@ -18,14 +18,14 @@
     <td class="trow1" width="80%">
         {$duration}
     </td>
-    {$attributeValueRows}
-    <tr>
-        <td class="trow1" width="20%">
-            <strong>{$lang->adrem_assesment_result_data}</strong>
-        </td>
-        <td class="trow1" width="80%">
-            <pre><code>{$resultData}</code></pre>
-        </td>
-    </tr>
-    {$controls}
 </tr>
+{$attributeValueRows}
+<tr>
+    <td class="trow1" width="20%">
+        <strong>{$lang->adrem_assessment_result_data}</strong>
+    </td>
+    <td class="trow1" width="80%">
+        <pre><code>{$resultData}</code></pre>
+    </td>
+</tr>
+{$controls}

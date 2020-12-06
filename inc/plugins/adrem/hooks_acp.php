@@ -10,7 +10,25 @@ function admin_load(): void
         if ($value = $mybb->get_input('value')) {
             $results = \adrem\Ruleset::getValidationResults($value);
 
-            header('Content-type: application/json');
+            foreach ($results as $type => &$typeResults) {
+                foreach ($typeResults as &$typeResult) {
+                    $string = $typeResult[0];
+
+                    if (!empty($typeResult[1])) {
+                        $variables = [];
+
+                        foreach ($typeResult[1] as $name => $value) {
+                            $variables[] = $name . ': <code>' . htmlspecialchars_uni($value) . '</code>';
+                        }
+
+                        $string .= ' (' . implode('; ', $variables) . ')';
+                    }
+
+                    $typeResult = $string;
+                }
+            }
+
+            header('Content-type: application/json; charset=utf-8');
 
             echo json_encode($results);
 

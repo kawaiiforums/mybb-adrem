@@ -14,13 +14,11 @@ class Inspection
      * @var Ruleset
      */
     protected $ruleset;
-    /**
-     * @var ContentEntity
-     */
+
+    /** @var ContentEntity */
     protected $contentEntity;
-    /**
-     * @var \DB_Base
-     */
+
+    /** @var \DB_Base */
     protected $db;
 
     public function __construct(?int $id = null)

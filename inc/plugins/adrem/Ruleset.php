@@ -4,6 +4,20 @@ namespace adrem;
 
 class Ruleset
 {
+    public static $supportedRuleOperators = [
+        '<',
+        '<=',
+        '>',
+        '>=',
+        '=',
+        '!=',
+    ];
+
+    public static $supportedRuleGroupOperators = [
+        'any',
+        'all',
+    ];
+
     protected $ruleset;
 
     public static function getParsedRuleset(string $value): array
@@ -31,29 +45,29 @@ class Ruleset
         $value = json_decode($json, true);
 
         if ($value === null) {
-            $results['errors'][] = 'INVALID_JSON';
+            $results['errors'][] = ['INVALID_JSON'];
         } else {
             $ruleset = $value;
 
             if (!is_array($ruleset)) {
-                $results['errors'][] = 'RULESET_NOT_AN_ARRAY';
+                $results['errors'][] = ['RULESET_NOT_AN_ARRAY'];
             } else {
                 foreach ($ruleset as $contentType => $contentTypeRuleset) {
                     if (!\adrem\contentTypeExists($contentType)) {
-                        $results['warnings'][] = 'CONTENT_TYPE_NOT_FOUND (' . $contentType . ')';
+                        $results['warnings'][] = ['CONTENT_TYPE_NOT_FOUND', compact('contentType')];
 
                         $contentTypeExists = false;
                     } else {
                         $contentTypeExists = true;
 
                         if (!\adrem\contentTypeDiscoverable($contentType)) {
-                            $results['warnings'][] = 'CONTENT_TYPE_NOT_DISCOVERABLE (' . $contentType . ')';
+                            $results['warnings'][] = ['CONTENT_TYPE_NOT_DISCOVERABLE', compact('contentType')];
                         }
                     }
 
                     foreach ($contentTypeRuleset as $conditional) {
                         if (!isset($conditional['rules']) || !is_array($conditional['rules'])) {
-                            $results['errors'][] = 'NO_RULES_ARRAY_IN_CONDITIONAL (' . $contentType . ')';
+                            $results['errors'][] = ['NO_RULES_ARRAY_IN_CONDITIONAL', compact('contentType')];
                         } else {
                             $results = array_merge_recursive(
                                 $results,
@@ -62,7 +76,7 @@ class Ruleset
                         }
 
                         if (!isset($conditional['actions']) || !is_array($conditional['actions'])) {
-                            $results['errors'][] = 'NO_ACTIONS_ARRAY_IN_CONDITIONAL (' . $contentType . ')';
+                            $results['errors'][] = ['NO_ACTIONS_ARRAY_IN_CONDITIONAL', compact('contentType')];
                         } elseif ($contentTypeExists) {
                             foreach ($conditional['actions'] as $action) {
                                 if (substr_count($action, ':') == 1) {
@@ -76,14 +90,14 @@ class Ruleset
                                     !\adrem\contentTypeExists($actionContentType) ||
                                     !\adrem\contentTypeActionExists($actionContentType, $actionName)
                                 ) {
-                                    $results['warnings'][] = 'ACTION_NOT_FOUND (' . $actionContentType . ':' . $actionName . ')';
+                                    $results['warnings'][] = ['ACTION_NOT_FOUND', compact('contentType', 'actionContentType', 'actionName')];
                                 } else {
                                     if (
                                         $contentTypeExists &&
                                         $actionContentType != $contentType &&
                                         !\adrem\contentTypeContextPassable($contentType, $actionContentType)
                                     ) {
-                                        $results['warnings'][] = 'CONTENT_TYPE_CONTEXT_NOT_PASSABLE (' . $contentType . '->' . $actionContentType . ':' . $actionName . ')';
+                                        $results['warnings'][] = ['CONTENT_TYPE_CONTEXT_NOT_PASSABLE', compact('contentType', 'actionContentType', 'actionName')];
                                     }
                                 }
                             }
@@ -173,55 +187,46 @@ class Ruleset
             'warnings' => [],
         ];
 
-
-        $allowedRuleOperators = [
-            '<',
-            '<=',
-            '>',
-            '>=',
-            '=',
-            '!=',
-        ];
-
-        $allowedRuleGroupOperators = [
-            'any',
-            'all',
-        ];
-
         if ($rootLevel == true && count($ruleArray) > 1) {
-            $results['errors'][] = 'NO_ROOT_RULE_GROUP (' . $contentType . ')';
+            $results['errors'][] = ['NO_ROOT_RULE_GROUP', compact('contentType')];
         } else {
             foreach ($ruleArray as $item) {
                 if (!is_array($item)) {
-                    $results['errors'][] = 'NOT_AN_ARRAY (@ ' . $contentType . ')';
+                    $results['errors'][] = ['NOT_AN_ARRAY', compact('contentType')];
                 } else {
-                    if (count($item) == 3 && is_string($item[0]) && is_string($item[1]) && is_string($item[2])) {
+                    if (count($item) === 3 && is_string($item[0]) && is_string($item[1]) && is_string($item[2])) {
                         if ($rootLevel) {
-                            $results['errors'][] = 'NO_ROOT_RULE_GROUP (' . $contentType . ')';
+                            $results['errors'][] = ['NO_ROOT_RULE_GROUP', compact('contentType')];
                         } else {
-                            [$attribute, $operator] = $item;
+                            try {
+                                extract(self::getRuleFromSimpleArray($item));
+                                /**
+                                 * @var string $assessmentName
+                                 * @var string $attributeName
+                                 * @var string $operator
+                                 * @var string $referenceValue
+                                 */
 
-                            if (substr_count($attribute, ':') != 1) {
-                                $results['errors'][] = 'RULE_ATTRIBUTE_INVALID (' . $contentType . ':' . $attribute . ')';
-                            } else {
-                                $attributeElements = explode(':', $attribute);
-
-                                if (!\adrem\assessmentExists($attributeElements[0])) {
-                                    $results['warnings'][] = 'ASSESSMENT_NOT_FOUND (' . $attributeElements[0] . ')';
+                                if (!\adrem\assessmentExists($assessmentName)) {
+                                    $results['warnings'][] = ['ASSESSMENT_NOT_FOUND',  compact('assessmentName')];
                                 } else {
-                                    if (!\adrem\assessmentProvidesAttribute($attributeElements[0], $attributeElements[1])) {
-                                        $results['warnings'][] = 'ASSESSMENT_ATTRIBUTE_NOT_PROVIDED (' . $attribute . ')';
+                                    if (!\adrem\assessmentProvidesAttribute($assessmentName, $attributeName)) {
+                                        $results['warnings'][] = ['ASSESSMENT_ATTRIBUTE_NOT_PROVIDED', compact('assessmentName', 'attributeName')];
                                     }
                                 }
 
-                                if (!in_array($operator, $allowedRuleOperators)) {
-                                    $results['errors'][] = 'RULE_OPERATOR_NOT_SUPPORTED (' . $operator . ')';
+                                if (!in_array($operator, static::$supportedRuleOperators)) {
+                                    $results['errors'][] = ['RULE_OPERATOR_NOT_SUPPORTED', compact('operator')];
                                 }
+                            } catch (\UnexpectedValueException $e) {
+                                $results['errors'][] = [$e->getMessage(), compact('contentType', 'attribute')];
                             }
                         }
                     } elseif (count($item) == 1 && is_array(current($item))) {
-                        if (!in_array(array_keys($item)[0], $allowedRuleGroupOperators)) {
-                            $results['errors'][] = 'RULE_GROUP_OPERATOR_INVALID (' . array_keys($item)[0] . ')';
+                        $operator = array_keys($item)[0];
+
+                        if (!in_array($operator, static::$supportedRuleGroupOperators)) {
+                            $results['errors'][] = ['RULE_GROUP_OPERATOR_INVALID', compact('operator')];
                         } else {
                             $results = array_merge_recursive(
                                 $results,
@@ -229,7 +234,7 @@ class Ruleset
                             );
                         }
                     } else {
-                        $results['errors'][] = 'NOT_RULE_OR_GROUP (@ ' . $contentType . ')';
+                        $results['errors'][] = ['NOT_RULE_OR_GROUP', compact('contentType')];
                     }
                 }
             }
@@ -259,10 +264,10 @@ class Ruleset
 
                 $itemResult = static::getRuleArrayResult(current($item), $localRoleGroupOperator, $inspection, $ruleAttributeValues);
             } else {
-                [$attribute, $operator, $referenceValue] = $item;
+                $rule = static::getRuleFromSimpleArray($item);
 
                 if ($inspection) {
-                    $attributeValue = $inspection->getAssessmentAttributeValue(...explode(':', $attribute));
+                    $attributeValue = $inspection->getAssessmentAttributeValue($rule['assessmentName'], $rule['attributeName']);
                 } else {
                     $attributeValue = $ruleAttributeValues[$attribute] ?? null;
                 }
@@ -271,7 +276,7 @@ class Ruleset
                     throw new \Exception('Attempting to use non-provided `' . $attribute . '` attribute');
                 }
 
-                $itemResult = static::getRuleResult($attributeValue, $referenceValue, $operator);
+                $itemResult = static::getRuleResult($attributeValue, $rule['referenceValue'], $rule['operator']);
             }
 
             $itemResults['operands']++;
@@ -351,7 +356,25 @@ class Ruleset
         return $result;
     }
 
-    protected function getContentTypeActionsInRuleset(string $contentType): array
+    protected static function getRuleFromSimpleArray(array $array): array
+    {
+        [$attribute, $operator, $referenceValue] = $array;
+
+        if (substr_count($attribute, ':') !== 1) {
+            throw new \UnexpectedValueException('RULE_ATTRIBUTE_INVALID');
+        } else {
+            [$assessmentName, $attributeName] = explode(':', $attribute);
+
+            return [
+                'assessmentName' => $assessmentName,
+                'attributeName' => $attributeName,
+                'operator' => $operator,
+                'referenceValue' => $referenceValue,
+            ];
+        }
+    }
+
+    protected function getContentTypeActionsInRuleset(string $contentType, array $events = []): array
     {
         $actions = [];
 
