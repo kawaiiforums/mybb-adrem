@@ -132,11 +132,6 @@ function replaceInTemplate(string $title, string $find, string $replace): bool
     return \find_replace_templatesets($title, '#' . preg_quote($find, '#') . '#', $replace);
 }
 
-function getArrayWithColumnAsKey(array $array, string $column): array
-{
-    return array_combine(array_column($array, $column), $array);
-}
-
 function getCacheValue(string $key)
 {
     global $cache;
