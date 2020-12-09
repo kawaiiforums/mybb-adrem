@@ -203,6 +203,10 @@ class Ruleset
 
             return array_unique($actions);
         } catch (\Exception $e) {
+            if (isset($GLOBALS['error_handler'])) {
+                $GLOBALS['error_handler']->error(E_USER_ERROR, $e->getMessage(), $e->getFile(), $e->getLine());
+            }
+
             return [];
         }
     }
