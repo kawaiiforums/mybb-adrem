@@ -17,7 +17,13 @@ class Post extends ContentEntity
             $revision = $this->defaultRevision;
         }
 
-        if (!isset($this->data[$revision]) || ($extended && !isset($this->extendedData[$revision]))) {
+        if (
+            $revision === $this->defaultRevision &&
+            (
+                !isset($this->data[$revision]) ||
+                ($extended && !isset($this->extendedData[$revision]))
+            )
+        ) {
             $data = \get_post($this->id);
 
             if ($data !== false) {

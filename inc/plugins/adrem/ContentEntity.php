@@ -6,6 +6,7 @@ class ContentEntity
 {
     protected $id;
     protected $defaultRevision = 'current';
+    protected $dataRevisions = [];
     protected $data = [];
     /**
      * Additional data that will not be logged.
@@ -91,11 +92,24 @@ class ContentEntity
         }
 
         $this->data[$revision] = array_merge($this->data[$revision] ?? [], $data);
+
+        if (!in_array($revision, $this->dataRevisions)) {
+            $this->dataRevisions[] = $revision;
+        }
     }
 
     public function getDefaultRevision(): string
     {
         return $this->defaultRevision;
+    }
+
+    public function dataRevisionExists(?string $revision = null): bool
+    {
+        if ($revision === null) {
+            $revision = $this->defaultRevision;
+        }
+
+        return in_array($revision, $this->dataRevisions);
     }
 
     public function assumeContext(ContentEntity $contextContentEntity): bool
