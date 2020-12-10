@@ -112,14 +112,17 @@ function postbit(array &$post): void
         if (isset($inspections[$post['pid']]) && $inspections[$post['pid']] >= $post['edittime']) {
             if ($inspections[$post['pid']]['actions'] != '') {
                 $statusName = 'triggered';
-                $statusText = $lang->adrem_entity_inspection_status_triggered;
+                $statusText = '&#9873;'; // ⚑
+                $statusDescription = $lang->adrem_entity_inspection_status_triggered;
             } else {
                 $statusName = 'processed';
-                $statusText = $lang->adrem_entity_inspection_status_processed;
+                $statusText = '&#9872;'; // ⚐
+                $statusDescription = $lang->adrem_entity_inspection_status_processed;
             }
         } else {
             $statusName = 'unprocessed';
-            $statusText = $lang->adrem_entity_inspection_status_unprocessed;
+            $statusText = '&#9872;'; // ⚐
+            $statusDescription = $lang->adrem_entity_inspection_status_unprocessed;
         }
 
         $url = $mybb->settings['bburl'] . '/modcp.php?action=content_inspections&amp;type=post&amp;entity_id=' . (int)$post['pid'];
