@@ -115,12 +115,12 @@ function getContentTypeActionsByName(array $actions, string $contentEntityName):
 }
 
 // Inspections
-function discoverContentEntity(ContentEntity $contentEntity, ?string $eventName = null): void
+function discoverContentEntity(ContentEntity $contentEntity, ?string $eventName = null): ?Inspection
 {
-    \adrem\inspectContentEntity($contentEntity, $eventName);
+    return \adrem\inspectContentEntity($contentEntity, $eventName);
 }
 
-function inspectContentEntity(ContentEntity $contentEntity, ?string $eventName = null): void
+function inspectContentEntity(ContentEntity $contentEntity, ?string $eventName = null): Inspection
 {
     global $db;
 
@@ -139,6 +139,8 @@ function inspectContentEntity(ContentEntity $contentEntity, ?string $eventName =
     );
 
     \adrem\triggerContentTypeActions($contentEntity, $contentTypeActions);
+
+    return $inspection;
 }
 
 function triggerContentTypeActions(ContentEntity $contentEntity, array $contentTypeActions): void

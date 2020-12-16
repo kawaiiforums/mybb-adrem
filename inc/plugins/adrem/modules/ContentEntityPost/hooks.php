@@ -47,7 +47,15 @@ function datahandler_post_insert_post_end(\PostDataHandler $postDataHandler): vo
                 'content' => $postDataHandler->data['message'],
             ]);
 
-            \adrem\discoverContentEntity($post, 'insert');
+            $inspection = \adrem\discoverContentEntity($post, 'insert');
+
+            if ($inspection !== null) {
+                $contentTypeActions = $inspection->getContentTypeActions();
+
+                if (in_array('unapprove', $contentTypeActions)) {
+                    $postDataHandler->return_values['visible'] = 0;
+                }
+            }
         }
     }
 }
@@ -80,7 +88,15 @@ function datahandler_post_update_end(\PostDataHandler $postDataHandler): void
                 ], 'previous');
             }
 
-            \adrem\discoverContentEntity($post, 'update');
+            $inspection = \adrem\discoverContentEntity($post, 'update');
+
+            if ($inspection !== null) {
+                $contentTypeActions = $inspection->getContentTypeActions();
+
+                if (in_array('unapprove', $contentTypeActions)) {
+                    $postDataHandler->return_values['visible'] = 0;
+                }
+            }
         }
     }
 }
