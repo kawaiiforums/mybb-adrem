@@ -42,7 +42,7 @@ class Core extends Assessment
 
     public function getTriggerWordsCountAttribute(): int
     {
-        $matches = 0;
+        $matchedValues = [];
 
         $contentEntityData = $this->getContentEntityData();
         $contentEntityFields = array_intersect(
@@ -57,11 +57,19 @@ class Core extends Assessment
 
         foreach ($contentEntityFields as $field) {
             foreach ($values as $value) {
-                $matches += preg_match_all('#\\b' . preg_quote($value) . '\\b#i', $contentEntityData[$field]);
+                if (!in_array($value, $matchedValues)) {
+                    $result = preg_match('#\\b' . preg_quote($value) . '\\b#i', $contentEntityData[$field]);
+
+                    if ($result === 1) {
+                        $matchedValues[] = $value;
+                    }
+                }
             }
         }
 
-        return $matches;
+        $uniqueMatches = count($matchedValues);
+
+        return $uniqueMatches;
     }
 
     public function getWordfilterCountAttribute(): int
