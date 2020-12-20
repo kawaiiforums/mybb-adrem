@@ -71,11 +71,11 @@ function datahandler_post_update_end(\PostDataHandler $postDataHandler): void
 {
     global $adremRuntimeRegistry;
 
-    if ($postDataHandler->method == 'update' && $postDataHandler->return_values['visible'] == 1) {
+    if ($postDataHandler->return_values['visible'] == 1) {
         if (\adrem\modules\ContentEntityPost\forumIsMonitored($postDataHandler->data['fid']) && \adrem\userIsMonitored()) {
             $post = new \adrem\ContentEntity\Post();
 
-            $post->setId($postDataHandler->data['pid']);
+            $post->setId($postDataHandler->pid);
             $post->setData([
                 'title' => $postDataHandler->data['subject'],
                 'content' => $postDataHandler->data['message'],
@@ -99,6 +99,25 @@ function datahandler_post_update_end(\PostDataHandler $postDataHandler): void
             }
         }
     }
+}
+
+function datahandler_post_validate_post(\PostDataHandler $postDataHandler): void
+{
+    global $adremRuntimeRegistry;
+
+    if ($postDataHandler->method != 'update') {
+        $previousPost = $postDataHandler->verify_post_merge();
+
+        if (is_array($previousPost)) {
+            // fetch previous revision data to process post auto merges as post updates
+            $adremRuntimeRegistry['existingPost'] = get_post($previousPost['pid']);
+        }
+    }
+}
+
+function datahandler_post_insert_merge(\PostDataHandler $postDataHandler): void
+{
+    datahandler_post_update_end($postDataHandler);
 }
 
 function postbit(array &$post): void
