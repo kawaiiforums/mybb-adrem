@@ -64,7 +64,7 @@ function datahandler_post_update(\PostDataHandler $postDataHandler):  void
 {
     global $adremRuntimeRegistry;
 
-    $adremRuntimeRegistry['existingPost'] = get_post($postDataHandler->data['pid']);
+    $adremRuntimeRegistry['existingPost'] = get_post($postDataHandler->pid);
 }
 
 function datahandler_post_update_end(\PostDataHandler $postDataHandler): void
