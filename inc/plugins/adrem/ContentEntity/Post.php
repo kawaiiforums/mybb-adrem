@@ -13,6 +13,8 @@ class Post extends ContentEntity
 
     public function getData(bool $extended = false, ?string $revision = null): ?array
     {
+        global $db;
+
         if ($revision === null) {
             $revision = $this->defaultRevision;
         }
@@ -24,14 +26,21 @@ class Post extends ContentEntity
                 ($extended && !isset($this->extendedData[$revision]))
             )
         ) {
-            $data = \get_post($this->id);
+            // get_post() global cache may contain outdated information
+            $data = $db->fetch_array(
+                $db->simple_select('posts', '*', 'pid=' . (int)$this->id)
+            );
 
-            if ($data !== false) {
-                $this->data[$revision] = [
+            if ($data) {
+                $this->data[$revision] = array_merge([
                     'title' => $data['subject'],
                     'content' => $data['message'],
-                ];
-                $this->extendedData[$revision] = $data;
+                ], $this->data[$revision] ?? []);
+                $this->extendedData[$revision] = array_merge($data, $this->extendedData[$revision] ?? []);
+
+                if (!in_array($revision, $this->dataRevisions)) {
+                    $this->dataRevisions[] = $revision;
+                }
             } else {
                 return null;
             }

@@ -24,11 +24,16 @@ class User extends ContentEntity
                 ($extended && !isset($this->extendedData[$revision]))
             )
         ) {
+            // get_user() global cache may contain outdated information
             $data = \get_user($this->id);
 
             if ($data !== false) {
-                $this->data[$revision] = $data;
-                $this->extendedData[$revision] = $data;
+                $this->data[$revision] = array_merge($data, $this->data[$revision] ?? []);
+                $this->extendedData[$revision] = array_merge($data, $this->extendedData[$revision] ?? []);
+
+                if (!in_array($revision, $this->dataRevisions)) {
+                    $this->dataRevisions[] = $revision;
+                }
             } else {
                 return null;
             }
