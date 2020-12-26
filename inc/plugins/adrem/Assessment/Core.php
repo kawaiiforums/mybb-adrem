@@ -34,7 +34,10 @@ class Core extends Assessment
             array_filter(
                 self::getMycodeLinkMatches($this->getContentEntityData()['content']),
                 function (array $matchSet) {
-                    return $matchSet['url'] !== $matchSet['name'];
+                    return (
+                        $matchSet['url'] === null || // potential incomplete nested match
+                        $matchSet['url'] !== $matchSet['name']
+                    );
                 }
             )
         );
@@ -116,10 +119,10 @@ class Core extends Assessment
         $parsedMessage = self::getParsedMessageWithTemplatePlaceholder(
             $content,
             'mycode_url',
-            "{\0ADREM_PLACEHOLDER\0{\$url}\0{\$name}\0}"
+            "<\0ADREM_PLACEHOLDER\0{\$url}\0{\$name}\0>"
         );
 
-        preg_match_all('#\\{\0ADREM_PLACEHOLDER\0(?<url>.*?)\0(?<name>.*?)\0\\}#', $parsedMessage, $matchSets, PREG_SET_ORDER);
+        preg_match_all('#<\0ADREM_PLACEHOLDER\0(?<url>[^\0]*?)\0(?<name>[^\0]*?)\0>#', $parsedMessage, $matchSets, PREG_SET_ORDER);
 
         $exemptHostnames = \adrem\getDelimitedSettingValues('assessment_core_link_exception_hosts');
 
@@ -129,6 +132,20 @@ class Core extends Assessment
             if ($host === false || $host === null || !in_array($host, $exemptHostnames)) {
                 $matches[] = $matchSet;
             }
+        }
+
+        // inflate results to account for failed matches from nested tags
+        $placeholderCount = substr_count($parsedMessage, "<\0ADREM_PLACEHOLDER\0");
+        $unprocessedMatches = $placeholderCount - count($matchSets);
+
+        if ($unprocessedMatches !== 0) {
+            $matches = array_merge(
+                $matches,
+                array_fill(0, $unprocessedMatches, [
+                    'url' => null,
+                    'name' => null,
+                ])
+            );
         }
 
         return $matches;
