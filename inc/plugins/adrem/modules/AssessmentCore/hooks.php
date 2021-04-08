@@ -12,17 +12,16 @@ function admin_config_settings_change(): void
     ];
 
     foreach ($settingNames as $settingName) {
-        $value = &$mybb->input['upsetting'][$settingName];
-
-        if (isset($value)) {
+        if (isset($mybb->input['upsetting'][$settingName])) {
             $values = array_filter(
-                preg_split("/\\r\\n|\\r|\\n/", $value)
+                preg_split("/\\r\\n|\\r|\\n/", $mybb->input['upsetting'][$settingName]),
+                function (string $value): bool { return $value !== ''; }
             );
 
             $values = array_unique($values);
             natsort($values);
 
-            $value = implode("\n", $values);
+            $mybb->input['upsetting'][$settingName] = implode("\n", $values);
         }
     }
 }
