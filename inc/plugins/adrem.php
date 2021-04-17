@@ -222,7 +222,7 @@ function adrem_activate()
         {
             "rules": [
                 {"any": [
-                    ["core:wordfilterMatches", ">=", "3"]
+                    ["core:wordfilterCount", ">=", "3"]
                 ]}
             ],
             "actions": ["report"]
