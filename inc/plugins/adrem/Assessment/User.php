@@ -23,6 +23,34 @@ class User extends Assessment
         return $this->userEntity->getData(true)['postnum'];
     }
 
+    public function getPostCountLastHourAttribute(): int
+    {
+        global $db;
+
+        return $db->fetch_field(
+            $db->simple_select(
+                'posts',
+                'COUNT(tid) as n',
+                'uid = ' . (int)$this->userEntity->getId() . ' AND visible IN (-1,0,1) AND dateline >= ' . (TIME_NOW - 3600)
+            ),
+            'n'
+        );
+    }
+
+    public function getThreadCountLastHourAttribute(): int
+    {
+        global $db;
+
+        return $db->fetch_field(
+            $db->simple_select(
+                'threads',
+                'COUNT(tid) as n',
+                'uid = ' . (int)$this->userEntity->getId() . ' AND visible IN (-1,0,1) AND dateline >= ' . (TIME_NOW - 3600)
+            ),
+            'n'
+        );
+    }
+
     public function getDaysRegisteredAttribute(): int
     {
         $secondsElapsed = \TIME_NOW - (int)$this->userEntity->getData(true)['regdate'];
