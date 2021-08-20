@@ -114,15 +114,18 @@ class Core extends Assessment
     {
         $matches = [];
 
-        $content = str_replace("\0", null, $content);
-
         $parsedMessage = self::getParsedMessageWithTemplatePlaceholder(
             $content,
             'mycode_url',
-            '<adrem_link_placeholder url="{$url}" name="{$name}" />'
+            '<a data-adrem-placeholder data-url="{$url}">{$name}</a>'
         );
 
-        preg_match_all('#<adrem_link_placeholder url="(?<url>[^<"]*?)" name="(?<name>[^<"]*?)" />#', $parsedMessage, $matchSets, PREG_SET_ORDER);
+        preg_match_all(
+            '#<a data-adrem-placeholder data-url="(?<url>[^<"]*?)">(?<name>.*?)</a>#',
+            $parsedMessage,
+            $matchSets,
+            PREG_SET_ORDER
+        );
 
         $exemptHostnames = \adrem\getDelimitedSettingValues('assessment_core_link_exception_hosts');
 
@@ -135,7 +138,7 @@ class Core extends Assessment
         }
 
         // inflate results to account for failed matches from nested tags
-        $placeholderCount = substr_count($parsedMessage, '<adrem_link_placeholder ');
+        $placeholderCount = substr_count($parsedMessage, '<a data-adrem-placeholder ');
         $unprocessedMatches = $placeholderCount - count($matchSets);
 
         if ($unprocessedMatches !== 0) {
