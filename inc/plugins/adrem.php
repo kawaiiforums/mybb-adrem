@@ -50,7 +50,7 @@ function adrem_info()
         'website'       => '',
         'author'        => 'Tomasz \'Devilshakerz\' Mlynski',
         'authorsite'    => 'https://devilshakerz.com/',
-        'version'       => '1.1',
+        'version'       => '1.1.1',
         'codename'      => 'adrem',
         'compatibility' => '18*',
     ];
