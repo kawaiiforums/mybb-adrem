@@ -43,7 +43,7 @@ function datahandler_post_insert_post_end(\PostDataHandler $postDataHandler): vo
 
             $post->setId($postDataHandler->return_values['pid']);
             $post->setData([
-                'title' => $postDataHandler->data['subject'],
+                'title' => $postDataHandler->data['subject'] ?? '',
                 'content' => $postDataHandler->data['message'],
             ]);
 
@@ -77,13 +77,13 @@ function datahandler_post_update_end(\PostDataHandler $postDataHandler): void
 
             $post->setId($postDataHandler->pid);
             $post->setData([
-                'title' => $postDataHandler->data['subject'],
+                'title' => $postDataHandler->data['subject'] ?? '',
                 'content' => $postDataHandler->data['message'],
             ]);
 
             if (isset($adremRuntimeRegistry['existingPost'])) {
                 $post->setData([
-                    'title' => $adremRuntimeRegistry['existingPost']['subject'],
+                    'title' => $adremRuntimeRegistry['existingPost']['subject'] ?? '',
                     'content' => $adremRuntimeRegistry['existingPost']['message'],
                 ], 'previous');
             }
@@ -125,11 +125,12 @@ function postbit(array &$post): void
     global $mybb, $lang, $pids;
 
     if ($mybb->usergroup['canviewmodlogs']) {
+        $lang->load('adrem');
+
         if (isset($pids)) {
             static $inspections = null;
 
             if (!$inspections) {
-                $lang->load('adrem');
 
                 $entityIds = str_replace([
                     'pid IN(',
