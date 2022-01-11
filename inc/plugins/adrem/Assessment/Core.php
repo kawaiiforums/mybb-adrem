@@ -64,6 +64,15 @@ class Core extends Assessment
         );
     }
 
+    public function getMycodeColorCountAttribute(): int
+    {
+        $parsedMessage = self::getParsedMessage($this->getContentEntityData()['content']);
+
+        $matches = substr_count($parsedMessage, ' class="mycode_color">');
+
+        return $matches;
+    }
+
     public function getTriggerWordsCountAttribute(): int
     {
         $matchedValues = [];
