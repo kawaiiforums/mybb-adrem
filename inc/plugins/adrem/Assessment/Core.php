@@ -114,14 +114,16 @@ class Core extends Assessment
     {
         $matches = [];
 
-        $parsedMessage = self::getParsedMessageWithTemplatePlaceholder(
+        $parsedMessage = self::getParsedMessage(
             $content,
-            'mycode_url',
-            '<a data-adrem-placeholder data-url="{$url}">{$name}</a>'
+            [],
+            [
+                'mycode_url' => '<a data-adrem-placeholder="" data-url="{$url}">{$name}</a>',
+            ]
         );
 
         preg_match_all(
-            '#<a data-adrem-placeholder data-url="(?<url>[^<"]*?)">(?<name>.*?)</a>#',
+            '#<a data-adrem-placeholder="" data-url="(?<url>[^<"]*?)">(?<name>.*?)</a>#',
             $parsedMessage,
             $matchSets,
             PREG_SET_ORDER
@@ -138,7 +140,7 @@ class Core extends Assessment
         }
 
         // inflate results to account for failed matches from nested tags
-        $placeholderCount = substr_count($parsedMessage, '<a data-adrem-placeholder ');
+        $placeholderCount = substr_count($parsedMessage, '<a data-adrem-placeholder="" ');
         $unprocessedMatches = $placeholderCount - count($matchSets);
 
         if ($unprocessedMatches !== 0) {
@@ -154,12 +156,16 @@ class Core extends Assessment
         return $matches;
     }
 
-    private static function getParsedMessageWithTemplatePlaceholder(string $message, string $templateName, string $placeholder, array $parserOptions = []): string
+    private static function getParsedMessage(string $message, array $parserOptions = [], array $templatePlaceholders = []): string
     {
         global $templates;
 
-        $originalTemplate = $templates->cache[$templateName] ?? null;
-        $templates->cache[$templateName] = $placeholder;
+        $originalTemplates = [];
+
+        foreach ($templatePlaceholders as $templateName => $templatePlaceholder) {
+            $originalTemplates[$templateName] = $templates->cache[$templateName] ?? null;
+            $templates->cache[$templateName] = $templatePlaceholder;
+        }
 
         require_once MYBB_ROOT . 'inc/class_parser.php';
         $parser = new \postParser();
@@ -181,10 +187,12 @@ class Core extends Assessment
 
         $parsedMessage = $parser->parse_message($message, $parserOptions);
 
-        if ($originalTemplate === null) {
-            unset($templates->cache[$templateName]);
-        } else {
-            $templates->cache[$templateName] = $originalTemplate;
+        foreach ($templatePlaceholders as $templateName => $templatePlaceholder) {
+            if ($originalTemplates[$templateName] === null) {
+                unset($templates->cache[$templateName]);
+            } else {
+                $templates->cache[$templateName] = $originalTemplates[$templateName];
+            }
         }
 
         return $parsedMessage;
