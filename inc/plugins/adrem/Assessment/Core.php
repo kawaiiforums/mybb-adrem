@@ -73,6 +73,15 @@ class Core extends Assessment
         return $matches;
     }
 
+    public function getMycodeSizeCountAttribute(): int
+    {
+        $parsedMessage = self::getParsedMessage($this->getContentEntityData()['content']);
+
+        $matches = substr_count($parsedMessage, ' class="mycode_size">');
+
+        return $matches;
+    }
+
     public function getTriggerWordsCountAttribute(): int
     {
         $matchedValues = [];
