@@ -28,6 +28,27 @@ class Core extends Assessment
         );
     }
 
+    public function getMycodeLinkWithNewUrlCountAttribute(): int
+    {
+        $urlsCurrent = array_column(
+            self::getMycodeLinkMatches($this->getContentEntityData()['content']),
+            'url'
+        );
+
+        if ($this->contentEntity->dataRevisionExists('previous')) {
+            $urlsPrevious = array_column(
+                self::getMycodeLinkMatches($this->contentEntity->getData(false, 'previous')['content']),
+                'url'
+            );
+        } else {
+            $urlsPrevious = [];
+        }
+
+        $newUrls = array_diff($urlsCurrent, $urlsPrevious);
+
+        return count($newUrls);
+    }
+
     public function getMycodeNamedLinkCountAttribute(): int
     {
         return count(
