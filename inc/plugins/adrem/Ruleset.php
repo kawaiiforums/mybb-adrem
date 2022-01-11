@@ -251,7 +251,7 @@ class Ruleset
                                     $results['errors'][] = ['RULE_OPERATOR_NOT_SUPPORTED', compact('operator')];
                                 }
                             } catch (\UnexpectedValueException $e) {
-                                $results['errors'][] = [$e->getMessage(), compact('contentType', 'attribute')];
+                                $results['errors'][] = [$e->getMessage(), compact('contentType')];
                             }
                         }
                     } elseif (count($item) == 1 && is_array(current($item))) {
