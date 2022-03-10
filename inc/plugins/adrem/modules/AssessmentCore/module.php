@@ -13,7 +13,7 @@ require __DIR__ . '/hooks.php';
     ],
     'assessment_core_link_exception_hosts' => [
         'title'       => 'Core Assessment: Link Count Hostname Exceptions',
-        'description' => 'Domains (one per line) that don\'t increment the <code>mycodeLinkCount</code> nor <code>mycodeNameLinkCount</code> attribute values. Saved in natural sort order.',
+        'description' => 'Domains (one per line) that don\'t increment the <code>mycodeLinkCount</code> nor <code>mycodeNamedLinkCount</code> attribute values. Saved in natural sort order.',
         'optionscode' => 'textarea',
         'value'       => parse_url($mybb->settings['bburl'], PHP_URL_HOST),
     ],
