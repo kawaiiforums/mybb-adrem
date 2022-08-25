@@ -6,8 +6,7 @@ use adrem\Assessment;
 
 class User extends Assessment
 {
-    /** @var \adrem\ContentEntity\User $userEntity */
-    protected $userEntity;
+    protected \adrem\ContentEntity $userEntity;
 
     public function getAttributeValues(): array
     {

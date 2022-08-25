@@ -4,18 +4,18 @@ namespace adrem;
 
 class ContentEntity
 {
-    protected $id;
-    protected $defaultRevision = 'current';
-    protected $dataRevisions = [];
-    protected $data = [];
+    protected ?int $id = null;
+    protected string $defaultRevision = 'current';
+    protected array $dataRevisions = [];
+    protected array $data = [];
     /**
      * Additional data that will not be logged.
      */
-    protected $extendedData = [];
+    protected array $extendedData = [];
     /**
      * @var ContentEntity[]
      */
-    protected $contextContentEntities = [];
+    protected array $contextContentEntities = [];
 
     public static function getName(): string
     {

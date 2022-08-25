@@ -4,18 +4,16 @@ namespace adrem;
 
 class Assessment
 {
-    protected $id;
-    /**
-     * @var ContentEntity
-     */
-    protected $contentEntity;
-    protected $contentEntityRevision;
-    protected $inspectionId;
-    protected $requestedAttributes = [];
-    protected $attributeValues = [];
-    protected $suggestedAttributeValues = [];
-    protected $duration;
-    protected $resultData;
+    protected ?int $id = null;
+
+    protected ContentEntity $contentEntity;
+    protected ?string $contentEntityRevision = null;
+    protected int $inspectionId;
+    protected array $requestedAttributes = [];
+    protected array $attributeValues = [];
+    protected array $suggestedAttributeValues = [];
+    protected ?float $duration = null;
+    protected ?array $resultData = null;
 
     const VERSION = '1';
 

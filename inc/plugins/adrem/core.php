@@ -86,7 +86,10 @@ function getContentEntityByContext(string $contentTypeName, ContentEntity $conte
         return $contextContentEntity->getContext($contextContentEntity);
     } else {
         $contentEntity = \adrem\getContentEntity($contentTypeName);
-        $contentEntity->assumeContext($contextContentEntity);
+
+        if ($contentEntity !== null) {
+            $contentEntity->assumeContext($contextContentEntity);
+        }
 
         return $contentEntity;
     }

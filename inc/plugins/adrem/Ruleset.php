@@ -4,7 +4,7 @@ namespace adrem;
 
 class Ruleset
 {
-    public static $supportedRuleOperators = [
+    public static array $supportedRuleOperators = [
         '<',
         '<=',
         '>',
@@ -13,12 +13,12 @@ class Ruleset
         '!=',
     ];
 
-    public static $supportedRuleGroupOperators = [
+    public static array $supportedRuleGroupOperators = [
         'any',
         'all',
     ];
 
-    protected $ruleset;
+    protected array $ruleset;
 
     public static function getParsedRuleset(string $value): array
     {

@@ -4,22 +4,17 @@ namespace adrem;
 
 class Inspection
 {
-    protected $id;
-    protected $completed = false;
-    protected $dateCompleted;
-    protected $contentTypeActions;
-    protected $declaredRevisionsAssessmentsAttributes = [];
-    protected $revisionsAssessmentsAttributeValues;
-    protected $eventNames = [];
+    protected ?int $id = null;
+    protected bool $completed = false;
+    protected ?int $dateCompleted = null;
+    protected ?array $contentTypeActions = null;
+    protected array $declaredRevisionsAssessmentsAttributes = [];
+    protected array $revisionsAssessmentsAttributeValues = [];
+    protected array $eventNames = [];
 
-    /** @var Ruleset */
-    protected $ruleset;
-
-    /** @var ContentEntity */
-    protected $contentEntity;
-
-    /** @var \DB_Base */
-    protected $db;
+    protected Ruleset $ruleset;
+    protected ContentEntity $contentEntity;
+    protected ?\DB_Base $db = null;
 
     public function __construct(?int $id = null)
     {

@@ -2,6 +2,7 @@
 
 namespace adrem;
 
+// hooks
 function addHooks(array $hooks, string $namespace = null): void
 {
     global $plugins;
@@ -42,6 +43,7 @@ function addHooksNamespace(string $namespace): void
     }
 }
 
+// reflection
 function getClassMethodsNamesMatching($class, string $pattern): array
 {
     $methodNames = [];
@@ -57,6 +59,7 @@ function getClassMethodsNamesMatching($class, string $pattern): array
     return $methodNames;
 }
 
+// settings
 function getSettingValue(string $name): string
 {
     global $mybb;
@@ -85,6 +88,7 @@ function getDelimitedSettingValues(string $name): array
     return $values[$name];
 }
 
+// themes
 function loadTemplates(array $templates, string $prefix = null): void
 {
     global $templatelist;
@@ -132,6 +136,7 @@ function replaceInTemplate(string $title, string $find, string $replace): bool
     return \find_replace_templatesets($title, '#' . preg_quote($find, '#') . '#', $replace);
 }
 
+// datacache
 function getCacheValue(string $key)
 {
     global $cache;
@@ -153,6 +158,7 @@ function updateCache(array $values, bool $overwrite = false): void
     $cache->update('adrem', $cacheContent);
 }
 
+// filesystem
 function getFilesContentInDirectory(string $path, string $fileNameSuffix): array
 {
     $contents = [];
@@ -170,6 +176,7 @@ function getFilesContentInDirectory(string $path, string $fileNameSuffix): array
     return $contents;
 }
 
+// database
 function dropTables(array $tableNames, bool $onlyIfExists = false, bool $cascade = false): void
 {
     global $db;
@@ -201,6 +208,13 @@ function dropTables(array $tableNames, bool $onlyIfExists = false, bool $cascade
     }
 }
 
+// data
+function getArraySubset(array $array, array $keys): array
+{
+    return array_intersect_key($array, array_flip($keys));
+}
+
+// 3rd party
 function loadPluginLibrary(): void
 {
     global $lang, $PL;
