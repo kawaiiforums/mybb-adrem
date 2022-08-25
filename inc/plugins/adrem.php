@@ -132,7 +132,7 @@ function adrem_install()
                     `id` integer NOT NULL auto_increment,
                     `content_type` varchar(100) NOT NULL,
                     `content_entity_id` integer NOT NULL,
-                    `content_entity_data` text NOT NULL,
+                    `content_entity_data` longtext NOT NULL,
                     `completed` integer(1) NOT NULL,
                     `date_requested` integer NOT NULL,
                     `date_completed` integer,
