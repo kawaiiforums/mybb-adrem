@@ -75,7 +75,10 @@ function modcp_start(): void
                         $mybb->get_input('entity_id', \MyBB::INPUT_INT)
                     );
 
-                    if ($contentEntity && $contentEntity->accessibleForCurrentUser()) {
+                    if (
+                        $contentEntity &&
+                        (\is_super_admin($mybb->user['uid']) || $contentEntity->accessibleForCurrentUser())
+                    ) {
                         \adrem\inspectContentEntity($contentEntity);
                         \redirect(
                             'modcp.php?action=content_inspections&amp;type=' . \htmlspecialchars_uni($mybb->get_input('type')) . '&amp;entity_id=' . $mybb->get_input('entity_id', \MyBB::INPUT_INT),
@@ -166,7 +169,7 @@ function modcp_start(): void
                 \add_breadcrumb($lang->adrem_inspection_logs, 'modcp.php?action=content_inspections');
                 \add_breadcrumb($lang->adrem_inspection_details);
 
-                if (\adrem\contentEntityAccessibleForCurrentUser(
+                if (\is_super_admin($mybb->user['uid']) || \adrem\contentEntityAccessibleForCurrentUser(
                     $inspectionData['content_type'],
                     $inspectionData['content_entity_id']
                 )) {
@@ -297,7 +300,7 @@ function modcp_start(): void
             ) {
                 $inspectionData = \adrem\getInspectionEntry($assessmentData['inspection_id']);
 
-                if (\adrem\contentEntityAccessibleForCurrentUser(
+                if (\is_super_admin($mybb->user['uid']) || \adrem\contentEntityAccessibleForCurrentUser(
                     $inspectionData['content_type'],
                     $inspectionData['content_entity_id']
                 )) {
