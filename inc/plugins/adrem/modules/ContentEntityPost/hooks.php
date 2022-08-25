@@ -45,6 +45,9 @@ function datahandler_post_insert_post_end(\PostDataHandler $postDataHandler): vo
             $post->setData([
                 'title' => $postDataHandler->data['subject'] ?? '',
                 'content' => $postDataHandler->data['message'],
+
+                // Entity-specific
+                'edittime' => \TIME_NOW,
             ]);
 
             $inspection = \adrem\discoverContentEntity($post, 'insert');
@@ -79,12 +82,18 @@ function datahandler_post_update_end(\PostDataHandler $postDataHandler): void
             $post->setData([
                 'title' => $postDataHandler->data['subject'] ?? '',
                 'content' => $postDataHandler->data['message'],
+
+                // Entity-specific
+                'edittime' => $postDataHandler->post_update_data['edittime'],
             ]);
 
             if (isset($adremRuntimeRegistry['existingPost'])) {
                 $post->setData([
                     'title' => $adremRuntimeRegistry['existingPost']['subject'] ?? '',
                     'content' => $adremRuntimeRegistry['existingPost']['message'],
+
+                    // Entity-specific
+                    'edittime' => $adremRuntimeRegistry['existingPost']['edittime'],
                 ], 'previous');
             }
 
