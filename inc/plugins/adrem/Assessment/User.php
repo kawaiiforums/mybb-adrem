@@ -61,4 +61,9 @@ class User extends Assessment
     {
         return $this->userEntity->getData(true)['warningpoints'];
     }
+
+    public function getWebsiteFieldFilledAttribute(): int
+    {
+        return $this->userEntity->getData(true)['website'] !== '';
+    }
 }
