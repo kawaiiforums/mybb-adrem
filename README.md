@@ -17,7 +17,7 @@ Inspects discovered content by feeding Content Entity data to modular Assessment
 ### Dependencies
 - MyBB 1.8.x
 - https://github.com/frostschutz/MyBB-PluginLibrary
-- PHP >= 7.1
+- PHP >= 7.4
 
 ---
 
