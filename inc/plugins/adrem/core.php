@@ -83,7 +83,7 @@ function contentTypeContextPassable(string $sourceContentTypeName, string $targe
 function getContentEntityByContext(string $contentTypeName, ContentEntity $contextContentEntity): ?ContentEntity
 {
     if ($contextContentEntity::providesContext($contentTypeName)) {
-        return $contextContentEntity->getContext($contextContentEntity);
+        return $contextContentEntity->getContext($contentTypeName);
     } else {
         $contentEntity = \adrem\getContentEntity($contentTypeName);
 
