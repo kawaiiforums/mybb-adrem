@@ -26,14 +26,10 @@ class Assessment
 
     public static function getProvidedAttributes(): array
     {
-        static $providedAttributes = null;
-
-        if ($providedAttributes === null) {
-            $providedAttributes = array_map('lcfirst', \adrem\getClassMethodsNamesMatching(
-                get_called_class(),
-                '/^get(.+)Attribute$/'
-            ));
-        }
+        $providedAttributes = array_map('lcfirst', \adrem\getClassMethodsNamesMatching(
+            get_called_class(),
+            '/^get(.+)Attribute$/'
+        ));
 
         return $providedAttributes;
     }
