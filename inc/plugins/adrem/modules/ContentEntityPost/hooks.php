@@ -84,7 +84,7 @@ function datahandler_post_update_end(\PostDataHandler $postDataHandler): void
                 'content' => $postDataHandler->data['message'],
 
                 // Entity-specific
-                'edittime' => $postDataHandler->post_update_data['edittime'],
+                'edittime' => $postDataHandler->post_update_data['edittime'] ?? \TIME_NOW,
             ]);
 
             if (isset($adremRuntimeRegistry['existingPost'])) {
