@@ -22,6 +22,34 @@ class User extends Assessment
         return $this->userEntity->getData(true)['postnum'];
     }
 
+    public function getUnapprovedPostCountAttribute(): int
+    {
+        global $db;
+
+        return $db->fetch_field(
+            $db->simple_select(
+                'posts',
+                'COUNT(pid) as n',
+                'uid = ' . (int)$this->userEntity->getId() . ' AND visible IN (0)'
+            ),
+            'n'
+        );
+    }
+
+    public function getInvisiblePostCountAttribute(): int
+    {
+        global $db;
+
+        return $db->fetch_field(
+            $db->simple_select(
+                'posts',
+                'COUNT(pid) as n',
+                'uid = ' . (int)$this->userEntity->getId() . ' AND visible IN (-1,0)'
+            ),
+            'n'
+        );
+    }
+
     public function getPostCountLastHourAttribute(): int
     {
         global $db;
